@@ -1,0 +1,1 @@
+// You can use [Result<T, E>] and [Option<T>] to return successful and failing results.
