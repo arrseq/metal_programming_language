@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod test;
+
 use std::fmt;
 use std::iter::{Enumerate, Peekable};
 use std::str::Chars;
@@ -216,13 +219,27 @@ impl<'a> Iterator for Tokens<'a> {
             return Some(Token { start, end, r#type: ty });
         }
 
+        // match numbers
+        if let Some((_, ch)) = self.string.peek() && let Some(digit) = ch.to_digit(10) {
+            let mut output = digit as u64;
+            self.string.next().unwrap();
+
+            while let Some((_, ch)) = self.string.peek() && let Some(digit) = ch.to_digit(10) {
+                output *= 10;
+                output += digit as u64;
+                self.string.next().unwrap();
+            }
+
+            let end = self.get_position();
+            return Some(Token { start, end, r#type: Type::Number(output)})
+        }
+
         let mut captured = String::new();
         
-        // match non-alphanumeric symbols.
+        // match non-alphabetical symbols.
         while let Some((_, ch)) = self.string.peek() {
             if ch.is_whitespace() || ch.is_alphabetic() { break }
             captured.push(*ch);
-
             self.string.next().unwrap();
 
             if let Some((_, ty)) = Type::SYMBOL_MAPPINGS.iter()
@@ -231,7 +248,6 @@ impl<'a> Iterator for Tokens<'a> {
                 return Some(Token { start, end, r#type: ty.clone() });
             }
         }
-        
         if !captured.is_empty() {
             let end = self.get_position();
             return Some(Token { start, end, r#type: Type::Other(captured) });
@@ -253,7 +269,7 @@ impl<'a> Iterator for Tokens<'a> {
                 Some(Token { start, end, r#type: Type::Identifier(captured) })
             }
         }
-        
+
         None
     }
 }

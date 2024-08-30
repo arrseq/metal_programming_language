@@ -1,4 +1,5 @@
 #![feature(inherent_associated_types)]
+#![feature(let_chains)]
 
 pub mod annotation;
 pub mod operator;
