@@ -6,7 +6,7 @@ use std::iter::{Enumerate, Peekable};
 use std::str::Chars;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Type {
+pub enum Token {
     // Whitespace.
     Space,                             // \s
     Tab,                               // \t
@@ -68,134 +68,113 @@ pub enum Type {
     Other(String)
 }
 
-impl<'a> Type {
-    pub const SYMBOL_MAPPINGS: [(&'a str, Type); 35] = [
-        ("[", Type::OpeningBracket),
-        ("]", Type::ClosingBracket),
-        (";", Type::Semicolon),
-        (":", Type::Colon),
-        (",", Type::Comma),
-        ("<", Type::OpeningChevron),
-        (">", Type::ClosingChevron),
-        ("\\", Type::Escape),
-        ("#\\", Type::IdentifierEscape),
-        ("+", Type::AddOperator),
-        (".", Type::Point),
-        ("-", Type::SubtractOperator),
-        ("*", Type::MultiplyOperator),
-        ("/", Type::DivideOperator),
-        ("!", Type::BitwiseNotOperator),
-        ("&", Type::BitwiseAndOperator),
-        ("|", Type::BitwiseOrOperator),
-        (">>", Type::BitwiseShiftRightOperator),
-        ("<<", Type::BitwiseShiftLeftOperator),
-        ("^", Type::BitwiseXorOperator),
-        ("==", Type::EqualOperator),
-        ("=", Type::AssignmentOperator),
-        ("+=", Type::AndEqualOperator),
-        ("-=", Type::SubtractEqualOperator),
-        ("*=", Type::MultiplyEqualOperator),
-        ("/=", Type::DivideEqualOperator),
-        ("&=", Type::BitwiseAndEqualOperator),
-        ("|=", Type::BitwiseOrEqualOperator),
-        (">>=", Type::BitwiseShiftRightEqualOperator),
-        ("<<=", Type::BitwiseShiftLeftEqualOperator),
-        ("^=", Type::BitwiseXorEqualOperator),
-        ("//", Type::LineCommentPrefix),
-        ("///", Type::DocumentationCommentPrefix),
-        ("'", Type::Quote),
-        ("\"", Type::DoubleQuote)
+impl<'a> Token {
+    pub const SYMBOL_MAPPINGS: [(&'a str, Token); 35] = [
+        ("[", Token::OpeningBracket),
+        ("]", Token::ClosingBracket),
+        (";", Token::Semicolon),
+        (":", Token::Colon),
+        (",", Token::Comma),
+        ("<", Token::OpeningChevron),
+        (">", Token::ClosingChevron),
+        ("\\", Token::Escape),
+        ("#\\", Token::IdentifierEscape),
+        ("+", Token::AddOperator),
+        (".", Token::Point),
+        ("-", Token::SubtractOperator),
+        ("*", Token::MultiplyOperator),
+        ("/", Token::DivideOperator),
+        ("!", Token::BitwiseNotOperator),
+        ("&", Token::BitwiseAndOperator),
+        ("|", Token::BitwiseOrOperator),
+        (">>", Token::BitwiseShiftRightOperator),
+        ("<<", Token::BitwiseShiftLeftOperator),
+        ("^", Token::BitwiseXorOperator),
+        ("==", Token::EqualOperator),
+        ("=", Token::AssignmentOperator),
+        ("+=", Token::AndEqualOperator),
+        ("-=", Token::SubtractEqualOperator),
+        ("*=", Token::MultiplyEqualOperator),
+        ("/=", Token::DivideEqualOperator),
+        ("&=", Token::BitwiseAndEqualOperator),
+        ("|=", Token::BitwiseOrEqualOperator),
+        (">>=", Token::BitwiseShiftRightEqualOperator),
+        ("<<=", Token::BitwiseShiftLeftEqualOperator),
+        ("^=", Token::BitwiseXorEqualOperator),
+        ("//", Token::LineCommentPrefix),
+        ("///", Token::DocumentationCommentPrefix),
+        ("'", Token::Quote),
+        ("\"", Token::DoubleQuote)
     ];
 
-    pub const STR_MAPPINGS: [(&'a str, Type); 4] = [
-        ("true", Type::BoolLiteral(true)),
-        ("false", Type::BoolLiteral(false)),
-        ("var", Type::VariableKeyword),
-        ("fun", Type::FunctionKeyword)
+    pub const STR_MAPPINGS: [(&'a str, Token); 4] = [
+        ("true", Token::BoolLiteral(true)),
+        ("false", Token::BoolLiteral(false)),
+        ("var", Token::VariableKeyword),
+        ("fun", Token::FunctionKeyword)
     ];
 }
 
-impl fmt::Display for Type {
+impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Type::Space => write!(f, " "),
-            Type::Tab => write!(f, "\t"),
-            Type::Newline => writeln!(f),
-            Type::VariableKeyword => write!(f, "var"),
-            Type::FunctionKeyword => write!(f, "fun"),
-            Type::OpeningBracket => write!(f, "["),
-            Type::ClosingBracket => write!(f, "]"),
-            Type::Semicolon => write!(f, ";"),
-            Type::Colon => write!(f, ":"),
-            Type::Comma => write!(f, ","),
-            Type::OpeningChevron => write!(f, "<"),
-            Type::ClosingChevron => write!(f, ">"),
-            Type::Escape => write!(f, "\\"),
-            Type::IdentifierEscape => write!(f, "#\\"),
-            Type::Quote => write!(f, "'"),
-            Type::DoubleQuote => write!(f, "\""),
-            Type::Point => write!(f, "."),
-            Type::AddOperator => write!(f, "+"),
-            Type::SubtractOperator => write!(f, "-"),
-            Type::MultiplyOperator => write!(f, "*"),
-            Type::DivideOperator => write!(f, "/"),
-            Type::BitwiseNotOperator => write!(f, "!"),
-            Type::BitwiseAndOperator => write!(f, "&"),
-            Type::BitwiseOrOperator => write!(f, "|"),
-            Type::BitwiseShiftRightOperator => write!(f, ">>"),
-            Type::BitwiseShiftLeftOperator => write!(f, "<<"),
-            Type::BitwiseXorOperator => write!(f, "^"),
-            Type::EqualOperator => write!(f, "=="),
-            Type::AssignmentOperator => write!(f, "="),
-            Type::AndEqualOperator => write!(f, "+="),
-            Type::SubtractEqualOperator => write!(f, "-="),
-            Type::MultiplyEqualOperator => write!(f, "*="),
-            Type::DivideEqualOperator => write!(f, "/="),
-            Type::BitwiseAndEqualOperator => write!(f, "&="),
-            Type::BitwiseOrEqualOperator => write!(f, "|="),
-            Type::BitwiseShiftRightEqualOperator => write!(f, ">>="),
-            Type::BitwiseShiftLeftEqualOperator => write!(f, "<<="),
-            Type::BitwiseXorEqualOperator => write!(f, "^="),
-            Type::BoolLiteral(b) => write!(f, "{}", b),
-            Type::Number(n) => write!(f, "{}", n),
-            Type::Identifier(s) => write!(f, "{}", s),
-            Type::LineCommentPrefix => write!(f, "//"),
-            Type::DocumentationCommentPrefix => write!(f, "///"),
-            Type::Other(s) => write!(f, "{}", s)
+            Token::Space => write!(f, " "),
+            Token::Tab => write!(f, "\t"),
+            Token::Newline => writeln!(f),
+            Token::VariableKeyword => write!(f, "var"),
+            Token::FunctionKeyword => write!(f, "fun"),
+            Token::OpeningBracket => write!(f, "["),
+            Token::ClosingBracket => write!(f, "]"),
+            Token::Semicolon => write!(f, ";"),
+            Token::Colon => write!(f, ":"),
+            Token::Comma => write!(f, ","),
+            Token::OpeningChevron => write!(f, "<"),
+            Token::ClosingChevron => write!(f, ">"),
+            Token::Escape => write!(f, "\\"),
+            Token::IdentifierEscape => write!(f, "#\\"),
+            Token::Quote => write!(f, "'"),
+            Token::DoubleQuote => write!(f, "\""),
+            Token::Point => write!(f, "."),
+            Token::AddOperator => write!(f, "+"),
+            Token::SubtractOperator => write!(f, "-"),
+            Token::MultiplyOperator => write!(f, "*"),
+            Token::DivideOperator => write!(f, "/"),
+            Token::BitwiseNotOperator => write!(f, "!"),
+            Token::BitwiseAndOperator => write!(f, "&"),
+            Token::BitwiseOrOperator => write!(f, "|"),
+            Token::BitwiseShiftRightOperator => write!(f, ">>"),
+            Token::BitwiseShiftLeftOperator => write!(f, "<<"),
+            Token::BitwiseXorOperator => write!(f, "^"),
+            Token::EqualOperator => write!(f, "=="),
+            Token::AssignmentOperator => write!(f, "="),
+            Token::AndEqualOperator => write!(f, "+="),
+            Token::SubtractEqualOperator => write!(f, "-="),
+            Token::MultiplyEqualOperator => write!(f, "*="),
+            Token::DivideEqualOperator => write!(f, "/="),
+            Token::BitwiseAndEqualOperator => write!(f, "&="),
+            Token::BitwiseOrEqualOperator => write!(f, "|="),
+            Token::BitwiseShiftRightEqualOperator => write!(f, ">>="),
+            Token::BitwiseShiftLeftEqualOperator => write!(f, "<<="),
+            Token::BitwiseXorEqualOperator => write!(f, "^="),
+            Token::BoolLiteral(b) => write!(f, "{}", b),
+            Token::Number(n) => write!(f, "{}", n),
+            Token::Identifier(s) => write!(f, "{}", s),
+            Token::LineCommentPrefix => write!(f, "//"),
+            Token::DocumentationCommentPrefix => write!(f, "///"),
+            Token::Other(s) => write!(f, "{}", s)
         }
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Token {
-    pub start: usize,
-    pub end: usize,
-    pub r#type: Type
 }
 
 #[derive(Debug, Clone)]
-pub struct Tokens<'a>{
-    max_index: usize,
-    string: Peekable<Enumerate<Chars<'a>>>
-}
-
-impl<'a> Tokens<'a> {
-    fn get_position(&mut self) -> usize {
-        if let Some(next) = self.string.peek() { return next.0 }
-        self.max_index
-    }
-}
+pub struct Tokens<'a>(Peekable<Enumerate<Chars<'a>>>);
 
 impl<'a> From<&'a str> for Tokens<'a> {
     fn from(value: &'a str) -> Self {
-        Self {
-            string: value
+        Self(value
                 .chars()
                 .enumerate()
-                .peekable(),
-            max_index: value.chars()
-                .count()
-        }
+                .peekable())
     }
 }
 
@@ -203,71 +182,58 @@ impl<'a> Iterator for Tokens<'a> {
     type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let start = self.get_position();
-
         // match a white space character.
-        let init_char = self.string.peek()?.1;
+        let init_char = self.0.peek()?.1;
         let r#type = match init_char {
-            ' ' => Some(Type::Space),
-            '\t' => Some(Type::Tab),
-            '\n' => Some(Type::Newline),
+            ' ' => Some(Token::Space),
+            '\t' => Some(Token::Tab),
+            '\n' => Some(Token::Newline),
             _ => None
         };
         if let Some(ty) = r#type {
-            self.string.next().unwrap();
-            let end = self.get_position();
-            return Some(Token { start, end, r#type: ty });
+            self.0.next().unwrap();
+            return Some(ty);
         }
 
         // match numbers
-        if let Some((_, ch)) = self.string.peek() && let Some(digit) = ch.to_digit(10) {
+        if let Some((_, ch)) = self.0.peek() && let Some(digit) = ch.to_digit(10) {
             let mut output = digit as u64;
-            self.string.next().unwrap();
+            self.0.next().unwrap();
 
-            while let Some((_, ch)) = self.string.peek() && let Some(digit) = ch.to_digit(10) {
+            while let Some((_, ch)) = self.0.peek() && let Some(digit) = ch.to_digit(10) {
                 output *= 10;
                 output += digit as u64;
-                self.string.next().unwrap();
+                self.0.next().unwrap();
             }
 
-            let end = self.get_position();
-            return Some(Token { start, end, r#type: Type::Number(output)})
+            return Some(Token::Number(output))
         }
 
         let mut captured = String::new();
         
         // match non-alphabetical symbols.
-        while let Some((_, ch)) = self.string.peek() {
+        while let Some((_, ch)) = self.0.peek() {
             if ch.is_whitespace() || ch.is_alphabetic() { break }
             captured.push(*ch);
-            self.string.next().unwrap();
+            self.0.next().unwrap();
 
-            if let Some((_, ty)) = Type::SYMBOL_MAPPINGS.iter()
+            if let Some((_, ty)) = Token::SYMBOL_MAPPINGS.iter()
                 .find(|p| p.0 == captured) {
-                let end = self.get_position();
-                return Some(Token { start, end, r#type: ty.clone() });
+                return Some(ty.clone());
             }
         }
-        if !captured.is_empty() {
-            let end = self.get_position();
-            return Some(Token { start, end, r#type: Type::Other(captured) });
-        }
+        if !captured.is_empty() { return Some(Token::Other(captured)); }
 
         // match keywords and identifiers.
         captured.clear();
-        while let Some((_, ch)) = self.string.peek() {
+        while let Some((_, ch)) = self.0.peek() {
             if !ch.is_alphabetic() && *ch != '_' { break }
             captured.push(*ch);
-            self.string.next().unwrap();
+            self.0.next().unwrap();
         }
         if !captured.is_empty() {
-            return if let Some(ty) = Type::STR_MAPPINGS.iter().find(|p| p.0 == captured) {
-                let end = self.get_position();
-                Some(Token { start, end, r#type: ty.1.clone() })
-            } else {
-                let end = self.get_position();
-                Some(Token { start, end, r#type: Type::Identifier(captured) })
-            }
+            return if let Some(ty) = Token::STR_MAPPINGS.iter().find(|p| p.0 == captured) { Some(ty.1.clone()) } 
+            else { Some(Token::Identifier(captured)) }
         }
 
         None

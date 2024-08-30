@@ -6,8 +6,8 @@ fn main() {
     
     let mut rebuilt = String::new();
     for token in lexer {
-        println!("tk({:?}) {}..{}", token.r#type, token.start, token.end);
-        rebuilt.push_str(&format!("{}", token.r#type));
+        println!("tk({:?})", token);
+        rebuilt.push_str(&format!("{}", token));
     }
     
     assert_eq!(rebuilt.as_str(), keywords);

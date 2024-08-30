@@ -1,1 +1,3 @@
-10
+fn main[args: [->str]] [
+    println!["Hello World {}", args];
+]
