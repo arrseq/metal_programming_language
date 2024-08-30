@@ -4,5 +4,5 @@ fn main() {
     let source = String::from(include_str!("./let_basic/source.mtx"));
     let mut parser = Parser::new(source.chars().enumerate().peekable());
     
-    dbg!(parser.parse_line_comment());
+    dbg!(parser.parse_comment_notation());
 }

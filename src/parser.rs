@@ -26,15 +26,20 @@ impl<'a> Parser<'a> {
         self.iterator.peek().map(|(pos, _)| *pos).map(|pos| pos.saturating_sub(1))
     }
 
+    pub fn parse_ident_char(&mut self) -> Option<char> {
+        if let Some((_, c)) = self.iterator.peek() {
+            if c.is_alphanumeric() || *c == '_' { self.iterator.next().map(|(_, ch)| ch) }
+            else { None }
+        }
+        else { None }
+    }
+
     pub fn parse_identifier(&mut self) -> Option<String> {
         let mut identifier = String::new();
 
         while let Some((_, c)) = self.iterator.peek() {
-            if c.is_alphanumeric() || c == &'_' {
-                identifier.push(*c);
-                self.iterator.next().unwrap();
-            }
-            else { break }
+            let Some(ch) = self.parse_ident_char() else { break };
+            identifier.push(ch);
         }
 
         if identifier.is_empty() { None }
@@ -169,28 +174,63 @@ impl<'a> Parser<'a> {
     pub fn parse_line_comment(&mut self) -> Option<String> {
         for _ in 0..2 { self.parse_char('/')? }
         self.parse_char(' ')?;
-        
+
         todo!()
     }
-    
-    pub fn parse_comment_notation(&mut self) -> Option<(String, Vec<comment::Annotation>> {
-        
-    }
 
-    pub fn parse_until(&mut self, stop: char) -> Option<String> {
-        let mut result = String::new();
-        let mut escaped = false;
+    pub fn parse_path(&mut self) -> Option<Vec<String>> {
+        let mut parts = Vec::new();
+        let mut current = String::new();
 
-        while let Some((_, c)) = self.iterator.peek() {
-            if c == &stop && !escaped { break }
-            else if c == &'\\' {
-                escaped = !escaped;
-                if !escaped { result.push(*c) }
-            } else { result.push(*c) }
+        loop {
+            if self.parse_char('/').is_some() {
+                if !current.is_empty() { parts.push(current) }
+                else { return None }
 
-            self.iterator.next().unwrap();
+                current = String::new();
+
+                continue;
+            }
+
+            let Some(ich) = self.parse_ident_char() else {
+                if !current.is_empty() { parts.push(current) }
+                else { return None }
+
+                break;
+            };
+
+            current.push(ich);
         }
 
-        if result.is_empty() { None } else { Some(result) }
+        Some(parts)
+    }
+
+    pub fn parse_comment_reference(&mut self) -> Option<comment::TypeReference> {
+        let start = self.get_current()?;
+        self.parse_char('[')?;
+        
+        let parts = self.parse_path()?;
+        self.parse_char(']');
+        let end = self.get_current()?;
+        
+        Some(comment::TypeReference  { start, end, parts })
+    }
+
+    pub fn parse_comment_notation(&mut self) -> Option<(String, Vec<comment::TypeReference>)> {
+        let mut result = String::new();
+        let mut references: Vec<comment::TypeReference> = vec![];
+
+        while let Some(captured) = self.iterator.peek() {
+            let start = self.get_current()?.saturating_sub(1);
+
+            // result += captured.as_str();
+            let parts = self.parse_path()?;
+            self.parse_char(']')?;
+
+            let end = self.get_current()?;
+            references.push(comment::TypeReference { start, end, parts });
+        }
+
+        Some((result, references))
     }
 }
