@@ -15,7 +15,7 @@ fn colorize(sample: &str) {
             Token::Number(_) => (76, 230, 253),
             Token::Space
             | Token::Tab
-            | Token::Newline => (240, 240, 240),
+            | Token::NewLine => (240, 240, 240),
             Token::Semicolon
             | Token::Colon
             | Token::Comma => (180, 180, 180),
