@@ -4,13 +4,14 @@ mod test;
 use std::fmt;
 use std::iter::{Enumerate, Peekable};
 use std::str::Chars;
+use crate::core::parser::node::whitespace;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     // Whitespace.
     Space,                             // \s
     Tab,                               // \t
-    Newline,                           // \n
+    NewLine,                           // \n
 
     // Keywords.
     VariableKeyword,                   // var
@@ -120,7 +121,7 @@ impl fmt::Display for Token {
         match self {
             Token::Space => write!(f, " "),
             Token::Tab => write!(f, "\t"),
-            Token::Newline => writeln!(f),
+            Token::NewLine => writeln!(f),
             Token::VariableKeyword => write!(f, "var"),
             Token::FunctionKeyword => write!(f, "fun"),
             Token::OpeningBracket => write!(f, "["),
@@ -167,13 +168,12 @@ impl fmt::Display for Token {
 }
 
 #[derive(Debug, Clone)]
-pub struct Tokens<'a>(Peekable<Enumerate<Chars<'a>>>);
+pub struct Tokens<'a>(Peekable<Chars<'a>>);
 
 impl<'a> From<&'a str> for Tokens<'a> {
     fn from(value: &'a str) -> Self {
         Self(value
                 .chars()
-                .enumerate()
                 .peekable())
     }
 }
@@ -183,11 +183,11 @@ impl<'a> Iterator for Tokens<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // match a white space character.
-        let init_char = self.0.peek()?.1;
+        let init_char = self.0.peek()?;
         let r#type = match init_char {
             ' ' => Some(Token::Space),
             '\t' => Some(Token::Tab),
-            '\n' => Some(Token::Newline),
+            '\n' => Some(Token::NewLine),
             _ => None
         };
         if let Some(ty) = r#type {
@@ -196,11 +196,11 @@ impl<'a> Iterator for Tokens<'a> {
         }
 
         // match numbers
-        if let Some((_, ch)) = self.0.peek() && let Some(digit) = ch.to_digit(10) {
+        if let Some(ch) = self.0.peek() && let Some(digit) = ch.to_digit(10) {
             let mut output = digit as u64;
             self.0.next().unwrap();
 
-            while let Some((_, ch)) = self.0.peek() && let Some(digit) = ch.to_digit(10) {
+            while let Some(ch) = self.0.peek() && let Some(digit) = ch.to_digit(10) {
                 output *= 10;
                 output += digit as u64;
                 self.0.next().unwrap();
@@ -212,7 +212,7 @@ impl<'a> Iterator for Tokens<'a> {
         let mut captured = String::new();
         
         // match non-alphabetical symbols.
-        while let Some((_, ch)) = self.0.peek() {
+        while let Some(ch) = self.0.peek() {
             if ch.is_whitespace() || ch.is_alphabetic() { break }
             captured.push(*ch);
             self.0.next().unwrap();
@@ -226,7 +226,7 @@ impl<'a> Iterator for Tokens<'a> {
 
         // match keywords and identifiers.
         captured.clear();
-        while let Some((_, ch)) = self.0.peek() {
+        while let Some(ch) = self.0.peek() {
             if !ch.is_alphabetic() && *ch != '_' { break }
             captured.push(*ch);
             self.0.next().unwrap();
@@ -237,5 +237,15 @@ impl<'a> Iterator for Tokens<'a> {
         }
 
         None
+    }
+}
+
+impl From<whitespace::Symbol> for Token {
+    fn from(value: whitespace::Symbol) -> Self {
+        match value {
+            whitespace::Symbol::Space => Self::Space,
+            whitespace::Symbol::Tab => Self::Tab,
+            whitespace::Symbol::NewLine => Self::NewLine
+        }
     }
 }
