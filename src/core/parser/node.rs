@@ -8,8 +8,10 @@ pub trait NodeTrait: Debug + Clone + PartialEq {
     type Error;
     fn parse(traverser: &mut Traverser) -> Result<Self, Self::Error>;
     
-    fn get_start(&self) -> usize;
-    fn get_end(&self) -> usize;
+    /// Get the start token index of this node.
+    fn start(&self) -> usize;
+    /// Get the end token index of this node.
+    fn end(&self) -> usize;
 }
 
 #[derive(Debug, Clone, PartialEq)]

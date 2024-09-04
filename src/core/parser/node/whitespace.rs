@@ -51,6 +51,6 @@ impl NodeTrait for Node {
         Ok(construct)
     }
 
-    fn get_start(&self) -> usize { self.start }
-    fn get_end(&self) -> usize { self.end }
+    fn start(&self) -> usize { self.start }
+    fn end(&self) -> usize { self.end }
 }
