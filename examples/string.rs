@@ -2,8 +2,8 @@ use metal_programming_language::core::parser::node::NodeTrait;
 use metal_programming_language::core::parser::node::string::Node;
 
 fn main() {
-    let mut tokens = metal_programming_language::core::parser::traverser::Traverser::from(r#""hello world""#);
-    let result = Node::parse(&mut tokens);
+    let mut tokens = metal_programming_language::core::parser::traverser::Traverser::from(include_str!("./string/escape.mtx"));
+    let result = Node::parse(&mut tokens).unwrap();
 
-    dbg!(result);
+    println!("parsed {}", result.value())
 }
