@@ -9,7 +9,7 @@ pub struct Traverser<'a> {
 }
 
 impl<'a> Traverser<'a> {
-    pub const fn get_offset(&self) -> usize { self.offset }
+    pub const fn offset(&self) -> usize { self.offset }
     pub fn peek(&mut self) -> Option<&Token> { self.tokens.peek() }
     
     /// Test to see if the next token in the stream is the provided token.
@@ -29,13 +29,6 @@ impl<'a> Traverser<'a> {
         let Some(peeked) = self.peek() else { return None };
         if test(peeked) { Some(self.next()?) }
         else { None }
-    }
-    
-    pub fn error<Kind>(&self, kind: Kind) -> error::Error<Kind> {
-        error::Error {
-            kind,
-            position: self.offset
-        }
     }
 }
 
