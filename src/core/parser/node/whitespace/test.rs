@@ -1,4 +1,4 @@
-use crate::core::parser::node::NodeTrait;
+use crate::core::parser::node::Node;
 use crate::core::parser::node::whitespace::{Node, Symbol};
 use crate::core::parser::traverser::Traverser;
 

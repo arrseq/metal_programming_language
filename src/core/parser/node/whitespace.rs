@@ -2,7 +2,8 @@
 mod test;
 
 use crate::core::lexer::{Token, Tokens};
-use crate::core::parser::node::NodeTrait;
+use crate::core::parser::node;
+use crate::core::parser::node::Node;
 use crate::core::parser::traverser::Traverser;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -32,7 +33,7 @@ pub struct Node {
     symbols: Vec<Symbol>
 }
 
-impl NodeTrait for Node {
+impl node::Node for Node {
     type Error = ();
 
     fn parse(traverser: &mut Traverser) -> Result<Self, Self::Error> {
