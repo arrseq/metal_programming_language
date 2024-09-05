@@ -12,7 +12,5 @@ fn parse_variable(traverser: Traverser) -> Result<Variable, parser::Error> {
 }
 
 fn main() {
-    let source = include_str!("./traverser/math.mtx");
-    let tokens = Tokens::from(source);
-    let traverser = Traverser::from(tokens);
+    let traverser = Traverser::from(include_str!("./traverser/math.mtx"));
 }

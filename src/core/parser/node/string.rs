@@ -3,7 +3,7 @@ mod test;
 
 use thiserror::Error;
 use crate::core::lexer::Token;
-use crate::core::parser::{error, node};
+use crate::core::parser::{error, node, traverser};
 use crate::core::parser::traverser::Traverser;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -32,7 +32,7 @@ impl node::Node for Node {
 
     fn parse(traverser: &mut Traverser) -> Result<Self, error::Error<Self::Error>> {
         let start = traverser.offset();
-        traverser.consume_token(&Token::DoubleQuote).then_some(()).ok_or(Error::ExpectedOpeningQuote)?;
+        traverser.consume_token(&Token::DoubleQuote).then_some(()).ok_or(error::Error::from_traverser(&traverser, Error::ExpectedOpeningQuote))?;
 
         let mut value = String::new();
         let mut escaping = false;
@@ -53,7 +53,10 @@ impl node::Node for Node {
                     token.to_string()
                 },
                 _ => {
-                    if escaping { return Err(error::Error::from_traverser(&traverser, Error::CannotEscape { symbol: traverser.next().unwrap() }))}
+                    if escaping {
+                        let symbol = traverser.next().unwrap();
+                        return Err(error::Error::from_traverser(&traverser, Error::CannotEscape { symbol }))
+                    }
                     token.to_string()
                 }
             };
@@ -67,7 +70,7 @@ impl node::Node for Node {
 
         Ok(Self { 
             start, end, 
-            value: value.into_boxed_str()
+            value: Box::<str>::from(value)
         })
     }
 

@@ -29,26 +29,28 @@ impl TryFrom<&Token> for Symbol {
 pub struct Node {
     start: usize,
     end: usize,
-    symbols: Vec<Symbol>
+    symbols: Box<[Symbol]>
 }
 
 impl node::Node for Node {
     type Error = ();
 
     fn parse(traverser: &mut Traverser) -> Result<Self, error::Error<Self::Error>> {
-        let mut construct = Self { 
-            start: traverser.offset(),
-            end: 0,
-            symbols: Vec::new()
-        };
+        let start = traverser.offset();
+        let mut symbols = Vec::new();
         while let Some(token) = traverser.peek() {
             let Ok(symbol) = Symbol::try_from(token) else { break };
-            construct.symbols.push(symbol);
+            symbols.push(symbol);
             traverser.next().unwrap();
         }
-        construct.end += traverser.offset();
         
-        Ok(construct)
+        if symbols.is_empty() { return Err(error::Error::from_traverser(&traverser, ())) }
+        
+        Ok(Self {
+            start,
+            end: traverser.offset(),
+            symbols: Box::<[Symbol]>::from(symbols)
+        })
     }
 
     fn start(&self) -> usize { self.start }
