@@ -2,8 +2,7 @@
 mod test;
 
 use crate::core::lexer::{Token, Tokens};
-use crate::core::parser::node;
-use crate::core::parser::node::Node;
+use crate::core::parser::{error, node};
 use crate::core::parser::traverser::Traverser;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -36,7 +35,7 @@ pub struct Node {
 impl node::Node for Node {
     type Error = ();
 
-    fn parse(traverser: &mut Traverser) -> Result<Self, Self::Error> {
+    fn parse(traverser: &mut Traverser) -> Result<Self, error::Error<Self::Error>> {
         let mut construct = Self { 
             start: traverser.get_offset(),
             end: 0,

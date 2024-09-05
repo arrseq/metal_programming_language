@@ -3,8 +3,7 @@ mod test;
 
 use thiserror::Error;
 use crate::core::lexer::Token;
-use crate::core::parser::node;
-use crate::core::parser::node::Node;
+use crate::core::parser::{error, node};
 use crate::core::parser::traverser::Traverser;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -31,7 +30,7 @@ pub enum Error {
 impl node::Node for Node {
     type Error = Error;
 
-    fn parse(traverser: &mut Traverser) -> Result<Self, Self::Error> {
+    fn parse(traverser: &mut Traverser) -> Result<Self, error::Error<Self::Error>> {
         let start = traverser.get_offset();
         traverser.consume_token(&Token::DoubleQuote).then_some(()).ok_or(Error::ExpectedOpeningQuote)?;
 
