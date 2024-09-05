@@ -31,7 +31,7 @@ impl node::Node for Node {
     type Error = Error;
 
     fn parse(traverser: &mut Traverser) -> Result<Self, error::Error<Self::Error>> {
-        let start = traverser.get_offset();
+        let start = traverser.offset();
         traverser.consume_token(&Token::DoubleQuote).then_some(()).ok_or(Error::ExpectedOpeningQuote)?;
 
         let mut value = String::new();
@@ -53,7 +53,7 @@ impl node::Node for Node {
                     token.to_string()
                 },
                 _ => {
-                    if escaping { return Err(Error::CannotEscape { symbol: traverser.next().unwrap() })}
+                    if escaping { return Err(error::Error::from_traverser(&traverser, Error::CannotEscape { symbol: traverser.next().unwrap() }))}
                     token.to_string()
                 }
             };
@@ -62,8 +62,8 @@ impl node::Node for Node {
             value += &*str_val;
         }
 
-        traverser.consume_token(&Token::DoubleQuote).then_some(()).ok_or(Error::ExpectedClosingQuote)?;
-        let end = traverser.get_offset();
+        traverser.consume_token(&Token::DoubleQuote).then_some(()).ok_or(error::Error::from_traverser(&traverser, Error::ExpectedClosingQuote))?;
+        let end = traverser.offset();
 
         Ok(Self { 
             start, end, 

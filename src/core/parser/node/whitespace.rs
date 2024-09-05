@@ -37,7 +37,7 @@ impl node::Node for Node {
 
     fn parse(traverser: &mut Traverser) -> Result<Self, error::Error<Self::Error>> {
         let mut construct = Self { 
-            start: traverser.get_offset(),
+            start: traverser.offset(),
             end: 0,
             symbols: Vec::new()
         };
@@ -46,7 +46,7 @@ impl node::Node for Node {
             construct.symbols.push(symbol);
             traverser.next().unwrap();
         }
-        construct.end += traverser.get_offset();
+        construct.end += traverser.offset();
         
         Ok(construct)
     }

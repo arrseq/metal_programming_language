@@ -15,8 +15,3 @@ pub trait Node: Debug + Clone + PartialEq {
     /// Get the end token index of this node.
     fn end(&self) -> usize;
 }
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Kind {
-    WhiteSpace
-}
