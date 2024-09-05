@@ -1,5 +1,6 @@
 use std::iter::Peekable;
 use crate::core::lexer::{Token, Tokens};
+use crate::core::parser::error;
 
 #[derive(Debug, Clone)]
 pub struct Traverser<'a> {
@@ -12,7 +13,7 @@ impl<'a> Traverser<'a> {
     pub fn peek(&mut self) -> Option<&Token> { self.tokens.peek() }
     
     /// Test to see if the next token in the stream is the provided token.
-    pub fn test_token(&mut self, token: &Token) -> bool {
+    pub fn match_token(&mut self, token: &Token) -> bool {
         let Some(peeked) = self.peek() else { return false };
         peeked == token
     }
@@ -22,6 +23,19 @@ impl<'a> Traverser<'a> {
         if peeked != token { return false }
         self.next().unwrap();
         true
+    }
+    
+    pub fn test_token(&mut self, test: &mut impl FnMut(&Token) -> bool) -> Option<Token> {
+        let Some(peeked) = self.peek() else { return None };
+        if test(peeked) { Some(self.next()?) }
+        else { None }
+    }
+    
+    pub fn error<Kind>(&self, kind: Kind) -> error::Error<Kind> {
+        error::Error {
+            kind,
+            position: self.offset
+        }
     }
 }
 
