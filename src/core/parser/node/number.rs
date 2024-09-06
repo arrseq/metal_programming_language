@@ -43,8 +43,28 @@ impl Node {
             .ok_or(error::Error::from_traverser(&traverser, error))?)
     }
     
-    fn parse_base_number(traverser: &mut Traverser) -> Result<Number, error::Error<<Self as node::Node>::Error>> {
-        todo!()
+    pub(crate) fn parse_base_number(traverser: &mut Traverser) -> Result<Number, error::Error<<Self as node::Node>::Error>> {
+        let negate = traverser.try_consume_token(&Token::SubtractOperator);
+        let whole = Self::next_number(traverser, Error::ExpectedWholeNumber)?;
+
+        // todo: Implement checks for numbers if they overflow in normal memory.
+
+        // Floating point number.
+        if traverser.try_consume_token(&Token::Comma) {
+            let fractional_integer = Self::next_number(traverser, Error::ExpectedFractionalNumber)?;
+            let digits_count = (fractional_integer.ilog10() + 1) as i32; // todo: Benchmark performance for kendal algorithm
+            let fractional = fractional_integer as f64 / 10f64.powi(digits_count);
+            let mut value = whole as f64 + fractional;
+            if negate { value = -value }
+            return Ok(Number::Float(value));
+        }
+
+        if negate {
+            let value = Number::Integer(-(whole as i64));
+            return Ok(value);
+        }
+
+        Ok(Number::UnsignedInteger(whole))
     }
 }
 
@@ -61,41 +81,12 @@ impl node::Node for Node {
 
     fn parse(traverser: &mut Traverser) -> Result<Self, error::Error<Self::Error>> {
         let start = traverser.offset();
-        let negate = traverser.try_consume_token(&Token::SubtractOperator);
-        let whole = Self::next_number(traverser, Error::ExpectedWholeNumber)?;
-        
-        // todo: Implement checks for numbers if they overflow in normal memory.
-        
-        // Floating point number.
-        if traverser.try_consume_token(&Token::Comma) {
-            let fractional_integer = Self::next_number(traverser, Error::ExpectedFractionalNumber)?;
-            let digits_count = (fractional_integer.ilog10() + 1) as i32; // todo: Benchmark performance for kendal algorithm
-            let fractional = fractional_integer as f64 / 10f64.powi(digits_count);
-            let mut value = whole as f64 + fractional;
-            if negate { value = -value }
-
-            Self::test_identifier(traverser)?;
-            return Ok(Self {
-                start, 
-                end: traverser.offset(),
-                value: Number::Float(value)
-            })
-        }
-        
-        if negate {
-            let value = Number::Integer(-(whole as i64));
-            Self::test_identifier(traverser)?;
-            return Ok(Self {
-                start, value,
-                end: traverser.offset()
-            });
-        }
-
+        let number  = Self::parse_base_number(traverser)?;
         Self::test_identifier(traverser)?;
         Ok(Self {
             start,
             end: traverser.offset(),
-            value: Number::UnsignedInteger(whole)
+            value: number
         })
     }
 
