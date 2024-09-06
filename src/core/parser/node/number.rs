@@ -16,9 +16,9 @@ pub enum Number {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Node {
-    start: usize,
-    end: usize,
-    value: Number
+    pub(crate) start: usize,
+    pub(crate) end: usize,
+    pub(crate) value: Number
 }
 
 impl Node {
@@ -39,7 +39,7 @@ impl Node {
     /// Read the next number or fail with an error
     fn next_number(traverser: &mut Traverser, error: Error) -> Result<u64, error::Error<<Self as node::Node>::Error>> {
         Ok(traverser
-            .test_token(|token| if let Token::Number(number) = token { Some(*number) } else { None })
+            .test_token(|token| if let Token::Number(number) = token { Some(number) } else { None })
             .ok_or(error::Error::from_traverser(&traverser, error))?)
     }
     

@@ -41,7 +41,7 @@ impl node::Node for Node {
         }
         
         let identifier = traverser
-            .test_token_fast(|token| if let Token::Identifier(identifier) = token { Some(identifier) } else { None })
+            .test_token(|token| if let Token::Identifier(identifier) = token { Some(identifier) } else { None })
             .ok_or(error::Error::from_traverser(&traverser, ()))?;
         Ok(Self {
             start,

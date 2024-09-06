@@ -20,7 +20,7 @@ fn get_ident_or_string(tokens: &mut Traverser) -> Option<(IOS, Box<str>, usize, 
     if let Some(string_node) = string { return Some((IOS::String, Box::<str>::from(string_node.value()), string_node.start(), string_node.end())) }
     
     // try identifier.
-    let ident = tokens.test_token_fast(|token| if let Token::Identifier(ident) = token { Some(ident) } else { None })?;
+    let ident = tokens.test_token(|token| if let Token::Identifier(ident) = token { Some(ident) } else { None })?;
     Some((IOS::Identifier, ident, todo!(), todo!()))
 }
 
