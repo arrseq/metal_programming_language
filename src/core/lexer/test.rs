@@ -13,6 +13,16 @@ fn basic() {
 }
 
 #[test]
+fn number() {
+    let source = "cats15";
+    let tokens = Tokens::from(source).collect::<Vec<Token>>();
+    assert_eq!(tokens, vec![
+        Token::Identifier(Box::<str>::from("cats")),
+        Token::Number(15)
+    ])
+}
+
+#[test]
 fn expression() {
     let source = "_x_x = 5 + 10;";
     let tokens = Tokens::from(source).collect::<Vec<Token>>();

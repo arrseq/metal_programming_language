@@ -227,7 +227,7 @@ impl<'a> Iterator for Tokens<'a> {
         // match keywords and identifiers.
         captured.clear();
         while let Some(ch) = self.0.peek() {
-            if !ch.is_alphabetic() && *ch != '_' && !ch.is_alphanumeric() { break }
+            if !ch.is_alphabetic() && *ch != '_' { break }
             captured.push(*ch);
             self.0.next().unwrap();
         }
