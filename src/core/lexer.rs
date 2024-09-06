@@ -213,9 +213,9 @@ impl<'a> Iterator for Tokens<'a> {
         
         // match non-alphabetical symbols.
         while let Some(ch) = self.0.peek() {
-            if ch.is_whitespace() || ch.is_alphabetic() { break }
+            if ch.is_whitespace() || ch.is_alphabetic() || *ch == '_' { break }
             captured.push(*ch);
-            self.0.next().unwrap();
+            let _ = self.0.next();
 
             if let Some((_, ty)) = Token::SYMBOL_MAPPINGS.iter()
                 .find(|p| p.0 == captured) {

@@ -5,19 +5,19 @@ fn basic() {
     let source = "hello world!";
     let tokens = Tokens::from(source).collect::<Vec<Token>>();
     assert_eq!(tokens, vec![
-        Token::Identifier("hello".to_string()),
+        Token::Identifier(Box::<str>::from("hello")),
         Token::Space,
-        Token::Identifier("world".to_string()),
+        Token::Identifier(Box::<str>::from("world")),
         Token::BitwiseNotOperator,
     ])
 }
 
 #[test]
 fn expression() {
-    let source = "x = 5 + 10;";
+    let source = "_x_x = 5 + 10;";
     let tokens = Tokens::from(source).collect::<Vec<Token>>();
     assert_eq!(tokens, vec![
-        Token::Identifier("x".to_string()),
+        Token::Identifier(Box::<str>::from("_x_x")),
         Token::Space,
         Token::AssignmentOperator,
         Token::Space,
