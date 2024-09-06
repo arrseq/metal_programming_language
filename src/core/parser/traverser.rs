@@ -26,6 +26,21 @@ impl<'a> Traverser<'a> {
         }
         else { None }
     }
+
+    pub fn test_token_fast<Output>(&mut self, mut test: impl FnMut(Token) -> Option<Output>) -> Option<Output> {
+        let original = self.tokens.clone();
+        let Some(token) = self.next() else {
+            self.tokens = original;
+            return None;
+        };
+
+        let Some(output) = test(token) else {
+            self.tokens = original;
+            return None;
+        };
+
+        Some(output)
+    }
 }
 
 impl<'a> From<&'a str> for Traverser<'a> {
