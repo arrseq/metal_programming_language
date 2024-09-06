@@ -3,7 +3,8 @@ mod test;
 
 use thiserror::Error;
 use crate::core::lexer::Token;
-use crate::core::parser::{error, node, traverser};
+use crate::core::parser::node;
+use crate::core::parser::node::error;
 use crate::core::parser::traverser::Traverser;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -17,7 +18,7 @@ impl Node {
     pub const fn value(&self) -> &str { &self.value }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq)]
 pub enum Error {
     #[error("Expected a quote to open the string")]
     ExpectedOpeningQuote,
@@ -32,7 +33,7 @@ impl node::Node for Node {
 
     fn parse(traverser: &mut Traverser) -> Result<Self, error::Error<Self::Error>> {
         let start = traverser.offset();
-        traverser.consume_token(&Token::DoubleQuote).then_some(()).ok_or(error::Error::from_traverser(&traverser, Error::ExpectedOpeningQuote))?;
+        traverser.try_consume_token(&Token::DoubleQuote).then_some(()).ok_or(error::Error::from_traverser(&traverser, Error::ExpectedOpeningQuote))?;
 
         let mut value = String::new();
         let mut escaping = false;
@@ -65,7 +66,7 @@ impl node::Node for Node {
             value += &*str_val;
         }
 
-        traverser.consume_token(&Token::DoubleQuote).then_some(()).ok_or(error::Error::from_traverser(&traverser, Error::ExpectedClosingQuote))?;
+        traverser.try_consume_token(&Token::DoubleQuote).then_some(()).ok_or(error::Error::from_traverser(&traverser, Error::ExpectedClosingQuote))?;
         let end = traverser.offset();
 
         Ok(Self { 

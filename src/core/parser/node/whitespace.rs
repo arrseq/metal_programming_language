@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod test;
 
-use crate::core::lexer::{Token, Tokens};
-use crate::core::parser::{error, node};
+use crate::core::lexer::Token;
+use crate::core::parser::node;
+use crate::core::parser::node::error;
 use crate::core::parser::traverser::Traverser;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
