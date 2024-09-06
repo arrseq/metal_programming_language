@@ -5,7 +5,7 @@ mod test;
 use thiserror::Error;
 use crate::core::lexer::Token;
 use crate::core::parser::node;
-use crate::core::parser::node::error;
+use crate::core::parser::node::{error, number};
 use crate::core::parser::node::number::Number;
 use crate::core::parser::traverser::Traverser;
 
@@ -20,6 +20,14 @@ impl Node {
     pub const fn value(&self) -> &str { &self.value }
 }
 
+#[derive(Debug, Error, PartialEq)]
+pub enum Error {
+    #[error("An error happened when parsing a number at the start of the identifier")]
+    Number(number::Error),
+    #[error("Expected an identifier token")]
+    ExpectedIdentifier
+}
+
 impl node::Node for Node {
     type Error = ();
 
@@ -29,7 +37,7 @@ impl node::Node for Node {
         
         // Number prefixed identifier.
         if escaped {
-            let number = traverser.test_token_fast(|token| if let Token::Number())
+            // let number = traverser.test_token_fast(|token| if let Token::Number())
         }
         
         let identifier = traverser

@@ -1,5 +1,7 @@
 use std::iter::Peekable;
 use crate::core::lexer::{Token, Tokens};
+use crate::core::parser::node;
+use crate::core::parser::node::error;
 
 #[derive(Debug, Clone)]
 pub struct Traverser<'a> {
@@ -17,7 +19,7 @@ impl<'a> Traverser<'a> {
         self.next().unwrap();
         true
     }
-    
+
     #[deprecated]
     pub fn test_token<Output>(&mut self, mut test: impl FnMut(&Token) -> Option<Output>) -> Option<Output> {
         let Some(peeked) = self.peek() else { return None };
@@ -53,6 +55,10 @@ impl<'a> Traverser<'a> {
         };
         
         Some(output)
+    }
+    
+    pub fn try_parse_node<Type: node::Node>(&mut self) -> Result<Type, error::Error<Type::Error>> {
+        todo!()
     }
 }
 

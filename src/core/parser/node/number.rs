@@ -68,21 +68,12 @@ impl Node {
     }
 }
 
-
-impl Node {
-    fn test_identifier(traverser: &mut Traverser) -> Result<(), error::Error<<Self as node::Node>::Error>> {
-        if matches!(traverser.peek(), Some(Token::Identifier(_))) { return Err(error::Error::from_traverser(&traverser, Error::FoundIdentifier)) }
-        Ok(())
-    }
-}
-
 impl node::Node for Node {
     type Error = Error;
 
     fn parse(traverser: &mut Traverser) -> Result<Self, error::Error<Self::Error>> {
         let start = traverser.offset();
         let number  = Self::parse_base_number(traverser)?;
-        Self::test_identifier(traverser)?;
         Ok(Self {
             start,
             end: traverser.offset(),
