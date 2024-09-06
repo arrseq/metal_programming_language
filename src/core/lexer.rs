@@ -63,7 +63,7 @@ pub enum Token {
     Number(u64),
 
     // Other.
-    Identifier(String),                // alphanumeric and _
+    Identifier(Box<str>),              // alphanumeric and _
     LineCommentPrefix,                 // //
     DocumentationCommentPrefix,        // ///
     Other(String)
@@ -227,13 +227,13 @@ impl<'a> Iterator for Tokens<'a> {
         // match keywords and identifiers.
         captured.clear();
         while let Some(ch) = self.0.peek() {
-            if !ch.is_alphabetic() && *ch != '_' { break }
+            if !ch.is_alphabetic() && *ch != '_' && !ch.is_alphanumeric() { break }
             captured.push(*ch);
             self.0.next().unwrap();
         }
         if !captured.is_empty() {
             return if let Some(ty) = Token::STR_MAPPINGS.iter().find(|p| p.0 == captured) { Some(ty.1.clone()) } 
-            else { Some(Token::Identifier(captured)) }
+            else { Some(Token::Identifier(Box::<str>::from(captured))) }
         }
 
         None
