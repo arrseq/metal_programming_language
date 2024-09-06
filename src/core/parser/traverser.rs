@@ -28,6 +28,8 @@ impl<'a> Traverser<'a> {
     }
 
     pub fn test_token_fast<Output>(&mut self, mut test: impl FnMut(Token) -> Option<Output>) -> Option<Output> {
+        // todo: Tis function could use self.use_reverting
+        
         let original = self.tokens.clone();
         let Some(token) = self.next() else {
             self.tokens = original;
@@ -39,6 +41,16 @@ impl<'a> Traverser<'a> {
             return None;
         };
 
+        Some(output)
+    }
+    
+    pub fn use_reverting<Output>(&mut self, mut operation: impl FnMut(&mut Self) -> Option<Output>) -> Option<Output> {
+        let original = self.tokens.clone();
+        let Some(output) = operation(self) else {
+            self.tokens = original;
+            return None;
+        };
+        
         Some(output)
     }
 }
