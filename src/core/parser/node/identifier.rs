@@ -29,7 +29,7 @@ pub enum Error {
 }
 
 impl node::Node for Node {
-    type Error = ();
+    type Error = Error;
 
     fn parse(traverser: &mut Traverser) -> Result<Self, error::Error<Self::Error>> {
         let start = traverser.offset();
