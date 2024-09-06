@@ -30,7 +30,9 @@ pub enum Error {
     #[error("The whole number component was expected")]
     ExpectedWholeNumber,
     #[error("The fractional component was expected because a decimal point was used")]
-    ExpectedFractionalNumber
+    ExpectedFractionalNumber,
+    #[error("Found an identifier when a number was expected")]
+    FoundIdentifier
 }
 
 impl Node {
@@ -39,6 +41,14 @@ impl Node {
         Ok(traverser
             .test_token(|token| if let Token::Number(number) = token { Some(*number) } else { None })
             .ok_or(error::Error::from_traverser(&traverser, error))?)
+    }
+}
+
+
+impl Node {
+    fn test_identifier(traverser: &mut Traverser) -> Result<(), error::Error<<Self as node::Node>::Error>> {
+        if matches!(traverser.peek(), Some(Token::Identifier(_))) { return Err(error::Error::from_traverser(&traverser, Error::FoundIdentifier)) }
+        Ok(())
     }
 }
 
@@ -60,6 +70,7 @@ impl node::Node for Node {
             let mut value = whole as f64 + fractional;
             if negate { value = -value }
             
+            Self::test_identifier(traverser)?;
             return Ok(Self {
                 start, 
                 end: traverser.offset(),
@@ -69,12 +80,14 @@ impl node::Node for Node {
         
         if negate {
             let value = Number::Integer(-(whole as i64));
+            Self::test_identifier(traverser)?;
             return Ok(Self {
                 start, value,
                 end: traverser.offset()
             });
         }
-        
+
+        Self::test_identifier(traverser)?;
         Ok(Self {
             start,
             end: traverser.offset(),
