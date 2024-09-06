@@ -18,6 +18,7 @@ impl<'a> Traverser<'a> {
         true
     }
     
+    #[deprecated]
     pub fn test_token<Output>(&mut self, mut test: impl FnMut(&Token) -> Option<Output>) -> Option<Output> {
         let Some(peeked) = self.peek() else { return None };
         if let Some(capture) = test(peeked) { 

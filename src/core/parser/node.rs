@@ -4,7 +4,8 @@ use crate::core::parser::traverser::Traverser;
 pub mod whitespace;
 pub mod string;
 pub mod number;
-mod error;
+pub mod error;
+pub mod identifier;
 
 pub trait Node: Sized + Debug {
     type Error: Debug + PartialEq;

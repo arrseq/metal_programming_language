@@ -57,7 +57,7 @@ fn unsigned_integer() {
 
 #[test]
 fn float() {
-    let mut tokens = Traverser::from("10.9");
+    let mut tokens = Traverser::from("10,9");
     let result = number::Node::parse(&mut tokens).unwrap();
     assert_eq!(result, number::Node {
         start: 0,
@@ -65,7 +65,7 @@ fn float() {
         value: Number::Float(10.9)
     });
 
-    let mut tokens = Traverser::from("40000000077.12345");
+    let mut tokens = Traverser::from("40000000077,12345");
     let result = number::Node::parse(&mut tokens).unwrap();
     assert_eq!(result, number::Node {
         start: 0,
@@ -73,7 +73,7 @@ fn float() {
         value: Number::Float(40000000077.12345)
     });
 
-    let mut tokens = Traverser::from("4044.");
+    let mut tokens = Traverser::from("4044,");
     let result = number::Node::parse(&mut tokens).unwrap_err();
     assert_eq!(result, error::Error {
         kind: number::Error::ExpectedFractionalNumber,
@@ -83,7 +83,7 @@ fn float() {
 
 #[test]
 fn negative_float() {
-    let mut tokens = Traverser::from("-10.9");
+    let mut tokens = Traverser::from("-10,9");
     let result = number::Node::parse(&mut tokens).unwrap();
     assert_eq!(result, number::Node {
         start: 0,
@@ -91,7 +91,7 @@ fn negative_float() {
         value: Number::Float(-10.9)
     });
 
-    let mut tokens = Traverser::from("-40000000077.12345");
+    let mut tokens = Traverser::from("-40000000077,12345");
     let result = number::Node::parse(&mut tokens).unwrap();
     assert_eq!(result, number::Node {
         start: 0,
@@ -99,10 +99,34 @@ fn negative_float() {
         value: Number::Float(-40000000077.12345)
     });
 
-    let mut tokens = Traverser::from("-4044.");
+    let mut tokens = Traverser::from("-4044,");
     let result = number::Node::parse(&mut tokens).unwrap_err();
     assert_eq!(result, error::Error {
         kind: number::Error::ExpectedFractionalNumber,
         end: 3
+    });
+}
+
+#[test]
+fn becomes_identifier() {
+    let mut tokens = Traverser::from("#-4044_something");
+    let result = number::Node::parse(&mut tokens).unwrap_err();
+    assert_eq!(result, error::Error {
+        kind: number::Error::FoundIdentifier,
+        end: 2
+    });
+
+    let mut tokens = Traverser::from("#-4044atoms");
+    let result = number::Node::parse(&mut tokens).unwrap_err();
+    assert_eq!(result, error::Error {
+        kind: number::Error::FoundIdentifier,
+        end: 2
+    });
+
+    let mut tokens = Traverser::from("#atoms-4044");
+    let result = number::Node::parse(&mut tokens).unwrap_err();
+    assert_eq!(result, error::Error {
+        kind: number::Error::ExpectedWholeNumber,
+        end: 0
     });
 }

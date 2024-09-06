@@ -42,6 +42,10 @@ impl Node {
             .test_token(|token| if let Token::Number(number) = token { Some(*number) } else { None })
             .ok_or(error::Error::from_traverser(&traverser, error))?)
     }
+    
+    fn parse_base_number(traverser: &mut Traverser) -> Result<Number, error::Error<<Self as node::Node>::Error>> {
+        todo!()
+    }
 }
 
 
@@ -63,13 +67,13 @@ impl node::Node for Node {
         // todo: Implement checks for numbers if they overflow in normal memory.
         
         // Floating point number.
-        if traverser.try_consume_token(&Token::Point) {
+        if traverser.try_consume_token(&Token::Comma) {
             let fractional_integer = Self::next_number(traverser, Error::ExpectedFractionalNumber)?;
             let digits_count = (fractional_integer.ilog10() + 1) as i32; // todo: Benchmark performance for kendal algorithm
             let fractional = fractional_integer as f64 / 10f64.powi(digits_count);
             let mut value = whole as f64 + fractional;
             if negate { value = -value }
-            
+
             Self::test_identifier(traverser)?;
             return Ok(Self {
                 start, 
