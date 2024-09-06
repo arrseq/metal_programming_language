@@ -1,5 +1,7 @@
 use colored::Colorize;
 use metal_programming_language::core::lexer::{Tokens, Token};
+use metal_programming_language::core::parser::node::{string, whitespace, Node};
+use metal_programming_language::core::parser::traverser::Traverser;
 
 fn colorize(sample: &str) {
     let tokens = Tokens::from(sample);
@@ -49,8 +51,44 @@ fn colorize(sample: &str) {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum IOS {
+    Identifier,
+    String
+}
+
+fn get_ident_or_string(tokens: &mut Traverser) -> Option<(IOS, Box<str>)> {
+    let _ = whitespace::Node::parse(tokens);
+    // try string
+    let string = tokens.use_reverting(|tokens| {
+        if let Ok(node) = string::Node::parse(tokens) { return Some(node) } 
+        None
+    });
+    
+    if let Some(string_node) = string { return Some((IOS::String, Box::<str>::from(string_node.value()))) }
+    
+    // try identifier.
+    let ident = tokens.test_token_fast(|token| if let Token::Identifier(ident) = token { Some(ident) } else { None })?;
+    Some((IOS::Identifier, ident))
+}
+
+fn print_strings() {
+    let mut tokens = Traverser::from(include_str!("./color/strings.mtx"));
+    loop {
+        let Some(ios) = get_ident_or_string(&mut tokens) else { break };
+        let str_val = match ios.0 {
+            IOS::Identifier => ios.1.red(),
+            IOS::String => ios.1.green()
+        };
+        
+        println!("{}", str_val);
+    }
+}
+
 fn main() {
     colorize(include_str!("./color/sample.mtx"));
     println!();
     colorize(include_str!("./color/random.mtx"));
+    
+    print_strings();
 }
