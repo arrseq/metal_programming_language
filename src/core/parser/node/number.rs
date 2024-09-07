@@ -30,9 +30,7 @@ pub enum Error {
     #[error("The whole number component was expected")]
     ExpectedWholeNumber,
     #[error("The fractional component was expected because a decimal point was used")]
-    ExpectedFractionalNumber,
-    #[error("Found an identifier when a number was expected")]
-    FoundIdentifier
+    ExpectedFractionalNumber
 }
 
 impl Node {

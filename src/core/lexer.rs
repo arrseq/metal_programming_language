@@ -114,56 +114,60 @@ impl<'a> Token {
         ("var", Token::VariableKeyword),
         ("fun", Token::FunctionKeyword)
     ];
+
+    pub fn to_boxed_str(&self) -> Box<str> {
+        match self {
+            Token::Space => " ".into(),
+            Token::Tab => "\t".into(),
+            Token::NewLine => "\n".into(),
+            Token::VariableKeyword => "var".into(),
+            Token::FunctionKeyword => "fun".into(),
+            Token::OpeningBracket => "[".into(),
+            Token::ClosingBracket => "]".into(),
+            Token::Semicolon => ";".into(),
+            Token::Colon => ":".into(),
+            Token::Comma => ",".into(),
+            Token::OpeningChevron => "<".into(),
+            Token::ClosingChevron => ">".into(),
+            Token::Escape => "\\".into(),
+            Token::IdentifierEscape => "#\\".into(),
+            Token::Quote => "'".into(),
+            Token::DoubleQuote => "\"".into(),
+            Token::Point => ".".into(),
+            Token::AddOperator => "+".into(),
+            Token::SubtractOperator => "-".into(),
+            Token::MultiplyOperator => "*".into(),
+            Token::DivideOperator => "/".into(),
+            Token::BitwiseNotOperator => "!".into(),
+            Token::BitwiseAndOperator => "&".into(),
+            Token::BitwiseOrOperator => "|".into(),
+            Token::BitwiseShiftRightOperator => ">>".into(),
+            Token::BitwiseShiftLeftOperator => "<<".into(),
+            Token::BitwiseXorOperator => "^".into(),
+            Token::EqualOperator => "==".into(),
+            Token::AssignmentOperator => "=".into(),
+            Token::AndEqualOperator => "+=".into(),
+            Token::SubtractEqualOperator => "-=".into(),
+            Token::MultiplyEqualOperator => "*=".into(),
+            Token::DivideEqualOperator => "/=".into(),
+            Token::BitwiseAndEqualOperator => "&=".into(),
+            Token::BitwiseOrEqualOperator => "|=".into(),
+            Token::BitwiseShiftRightEqualOperator => ">>=".into(),
+            Token::BitwiseShiftLeftEqualOperator => "<<=".into(),
+            Token::BitwiseXorEqualOperator => "^=".into(),
+            Token::BoolLiteral(b) => b.to_string().into(),
+            Token::Number(n) => n.to_string().into(),
+            Token::Identifier(s) => s.clone().into(),
+            Token::LineCommentPrefix => "//".into(),
+            Token::DocumentationCommentPrefix => "///".into(),
+            Token::Other(s) => s.clone().into()
+        }
+    }
 }
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Token::Space => write!(f, " "),
-            Token::Tab => write!(f, "\t"),
-            Token::NewLine => writeln!(f),
-            Token::VariableKeyword => write!(f, "var"),
-            Token::FunctionKeyword => write!(f, "fun"),
-            Token::OpeningBracket => write!(f, "["),
-            Token::ClosingBracket => write!(f, "]"),
-            Token::Semicolon => write!(f, ";"),
-            Token::Colon => write!(f, ":"),
-            Token::Comma => write!(f, ","),
-            Token::OpeningChevron => write!(f, "<"),
-            Token::ClosingChevron => write!(f, ">"),
-            Token::Escape => write!(f, "\\"),
-            Token::IdentifierEscape => write!(f, "#\\"),
-            Token::Quote => write!(f, "'"),
-            Token::DoubleQuote => write!(f, "\""),
-            Token::Point => write!(f, "."),
-            Token::AddOperator => write!(f, "+"),
-            Token::SubtractOperator => write!(f, "-"),
-            Token::MultiplyOperator => write!(f, "*"),
-            Token::DivideOperator => write!(f, "/"),
-            Token::BitwiseNotOperator => write!(f, "!"),
-            Token::BitwiseAndOperator => write!(f, "&"),
-            Token::BitwiseOrOperator => write!(f, "|"),
-            Token::BitwiseShiftRightOperator => write!(f, ">>"),
-            Token::BitwiseShiftLeftOperator => write!(f, "<<"),
-            Token::BitwiseXorOperator => write!(f, "^"),
-            Token::EqualOperator => write!(f, "=="),
-            Token::AssignmentOperator => write!(f, "="),
-            Token::AndEqualOperator => write!(f, "+="),
-            Token::SubtractEqualOperator => write!(f, "-="),
-            Token::MultiplyEqualOperator => write!(f, "*="),
-            Token::DivideEqualOperator => write!(f, "/="),
-            Token::BitwiseAndEqualOperator => write!(f, "&="),
-            Token::BitwiseOrEqualOperator => write!(f, "|="),
-            Token::BitwiseShiftRightEqualOperator => write!(f, ">>="),
-            Token::BitwiseShiftLeftEqualOperator => write!(f, "<<="),
-            Token::BitwiseXorEqualOperator => write!(f, "^="),
-            Token::BoolLiteral(b) => write!(f, "{}", b),
-            Token::Number(n) => write!(f, "{}", n),
-            Token::Identifier(s) => write!(f, "{}", s),
-            Token::LineCommentPrefix => write!(f, "//"),
-            Token::DocumentationCommentPrefix => write!(f, "///"),
-            Token::Other(s) => write!(f, "{}", s)
-        }
+        write!(f, "{}", self.to_boxed_str())
     }
 }
 
@@ -173,8 +177,8 @@ pub struct Tokens<'a>(Peekable<Chars<'a>>);
 impl<'a> From<&'a str> for Tokens<'a> {
     fn from(value: &'a str) -> Self {
         Self(value
-                .chars()
-                .peekable())
+            .chars()
+            .peekable())
     }
 }
 

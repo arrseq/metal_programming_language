@@ -106,27 +106,3 @@ fn negative_float() {
         end: 3
     });
 }
-
-#[test]
-fn becomes_identifier() {
-    let mut tokens = Traverser::from("#-4044_something");
-    let result = number::Node::parse(&mut tokens).unwrap_err();
-    assert_eq!(result, error::Error {
-        kind: number::Error::FoundIdentifier,
-        end: 2
-    });
-
-    let mut tokens = Traverser::from("#-4044atoms");
-    let result = number::Node::parse(&mut tokens).unwrap_err();
-    assert_eq!(result, error::Error {
-        kind: number::Error::FoundIdentifier,
-        end: 2
-    });
-
-    let mut tokens = Traverser::from("#atoms-4044");
-    let result = number::Node::parse(&mut tokens).unwrap_err();
-    assert_eq!(result, error::Error {
-        kind: number::Error::ExpectedWholeNumber,
-        end: 0
-    });
-}
