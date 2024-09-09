@@ -1,0 +1,22 @@
+depend io:console:#print_line.
+depend derive:default.
+
+fun calculate_velocity[displacement int | time int] int [
+    displacement / time
+]
+
+#[build[cpu = “x86”]]
+fun main[] [
+    var x = 10.
+    var y = 20.
+    var z = x:add(y).
+
+    var velocity = calculate_velocity[].
+    #print_line[“velocity [velocity]”].
+]
+
+/// Uses [vector<u8>] internally.
+#[derive[default]]
+struct string [
+    vector: vector<u8>
+]
