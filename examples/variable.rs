@@ -12,7 +12,14 @@ fn main() {
             Token::Space => token_string.white(),
             Token::Tab => token_string.white(),
             Token::Newline => token_string.white(),
-            Token::Identifier(_) => token_string.red(),
+            Token::Identifier(i) => match i {
+                "fun" 
+                | "var"
+                | "struct"
+                | "derive"
+                | "depend" => token_string.red(),
+                _ => token_string.white()
+            },
             Token::Digit(_) => token_string.cyan(),
             Token::OpeningBracket => token_string.white(),
             Token::ClosingBracket => token_string.white(),
