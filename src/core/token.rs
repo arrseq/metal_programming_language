@@ -1,5 +1,6 @@
 // # . , [ | ] = " < > \
 
+use std::fmt::write;
 use std::iter;
 use std::iter::Peekable;
 use std::str::CharIndices;
@@ -18,6 +19,7 @@ pub enum Token<'a> {
     OpeningChevron,
     ClosingChevron,
 
+    IdentifierEscape,
     Path,
     Macro,
     Decimal,
@@ -32,29 +34,30 @@ pub enum Token<'a> {
     Other(char)
 }
 
-impl<'a> From<Token<'a>> for String {
-    fn from(value: Token<'a>) -> Self {
-        match value {
-            Token::Space => String::from(" "),
-            Token::Tab => String::from("\t"),
-            Token::Newline => String::from("\n"),
-            Token::Identifier(identifier) => String::from(identifier),
-            Token::Digit(digit) => format!("{}", digit),
-            Token::OpeningBracket => String::from("["),
-            Token::ClosingBracket => String::from("]"),
-            Token::OpeningChevron => String::from("<"),
-            Token::ClosingChevron => String::from(">"),
-            Token::Path => String::from(":"),
-            Token::Macro => String::from("#"),
-            Token::Decimal => String::from(","),
-            Token::Stop => String::from("."),
-            Token::Separator => String::from("|"),
-            Token::Equal => String::from("="),
-            Token::StringQuote => String::from("'"),
-            Token::CharacterQuote => String::from("\""),
-            Token::Escape => String::from("\\"),
-            Token::Comment => String::from("/"),
-            Token::Other(other) => String::from(other)
+impl<'a> std::fmt::Display for Token<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::Space => write!(f, " "),
+            Token::Tab => write!(f, "\t"),
+            Token::Newline => write!(f, "\n"),
+            Token::Identifier(identifier) => write!(f, "{}", identifier),
+            Token::Digit(digit) => write!(f, "{}", digit),
+            Token::OpeningBracket => write!(f, "["),
+            Token::ClosingBracket => write!(f, "]"),
+            Token::OpeningChevron => write!(f, "<"),
+            Token::ClosingChevron => write!(f, ">"),
+            Token::IdentifierEscape => write!(f, "_"),
+            Token::Path => write!(f, ":"),
+            Token::Macro => write!(f, "#"),
+            Token::Decimal => write!(f, ","),
+            Token::Stop => write!(f, "."),
+            Token::Separator => write!(f, "|"),
+            Token::Equal => write!(f, "="),
+            Token::StringQuote => write!(f, "\""),
+            Token::CharacterQuote => write!(f, "'"),
+            Token::Escape => write!(f, "\\"),
+            Token::Comment => write!(f, "/"),
+            Token::Other(other) => write!(f, "{}", other),
         }
     }
 }
@@ -66,23 +69,24 @@ pub struct Mapping<'a> {
 }
 
 impl<'a> Token<'a> {
-    pub const MAPPINGS: [Mapping<'a>; 16] = [
-        Mapping { character: ' ',  token: Token::Space          },
-        Mapping { character: '\t', token: Token::Tab            },
-        Mapping { character: '\n', token: Token::Newline        },
-        Mapping { character: '[',  token: Token::OpeningBracket },
-        Mapping { character: ']',  token: Token::ClosingBracket },
-        Mapping { character: '<',  token: Token::OpeningChevron },
-        Mapping { character: '>',  token: Token::ClosingChevron },
-        Mapping { character: ':',  token: Token::Path           },
-        Mapping { character: '#',  token: Token::Macro          },
-        Mapping { character: ',',  token: Token::Decimal        },
-        Mapping { character: '.',  token: Token::Stop           },
-        Mapping { character: '|',  token: Token::Separator      },
-        Mapping { character: '=',  token: Token::Equal          },
-        Mapping { character: '"',  token: Token::StringQuote    },
-        Mapping { character: '\'', token: Token::CharacterQuote },
-        Mapping { character: '/',  token: Token::Comment        }
+    pub const MAPPINGS: [Mapping<'a>; 17] = [
+        Mapping { character: ' ',  token: Token::Space            },
+        Mapping { character: '\t', token: Token::Tab              },
+        Mapping { character: '\n', token: Token::Newline          },
+        Mapping { character: '[',  token: Token::OpeningBracket   },
+        Mapping { character: ']',  token: Token::ClosingBracket   },
+        Mapping { character: '<',  token: Token::OpeningChevron   },
+        Mapping { character: '>',  token: Token::ClosingChevron   },
+        Mapping { character: '_',  token: Token::IdentifierEscape },
+        Mapping { character: ':',  token: Token::Path             },
+        Mapping { character: '#',  token: Token::Macro            },
+        Mapping { character: ',',  token: Token::Decimal          },
+        Mapping { character: '.',  token: Token::Stop             },
+        Mapping { character: '|',  token: Token::Separator        },
+        Mapping { character: '=',  token: Token::Equal            },
+        Mapping { character: '"',  token: Token::StringQuote      },
+        Mapping { character: '\'', token: Token::CharacterQuote   },
+        Mapping { character: '/',  token: Token::Comment          }
     ];
 }
 

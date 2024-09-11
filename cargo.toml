@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 colored = "2.1.0"
+inline_colorization = "0.1.6"
 thiserror = "1.0.63"
