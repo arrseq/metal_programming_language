@@ -6,11 +6,11 @@ use std::iter::Peekable;
 use std::str::CharIndices;
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
-pub enum Token<'a> {
+pub enum Kind<'a> {
     #[default]
     Space,
     Tab,
-    Newline,
+    NewLine,
     Identifier(&'a str),
     Digit(u8),
 
@@ -34,30 +34,41 @@ pub enum Token<'a> {
     Other(char)
 }
 
-impl<'a> std::fmt::Display for Token<'a> {
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct Token<'a> {
+    kind: Kind<'a>,
+    byte_length: usize
+}
+
+impl<'a> Token<'a> {
+    pub fn kind(&self) -> Kind<'a> { self.kind }
+    pub fn byte_length(&self) -> usize { self.byte_length }
+}
+
+impl<'a> std::fmt::Display for Kind<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Token::Space => write!(f, " "),
-            Token::Tab => write!(f, "\t"),
-            Token::Newline => write!(f, "\n"),
-            Token::Identifier(identifier) => write!(f, "{}", identifier),
-            Token::Digit(digit) => write!(f, "{}", digit),
-            Token::OpeningBracket => write!(f, "["),
-            Token::ClosingBracket => write!(f, "]"),
-            Token::OpeningChevron => write!(f, "<"),
-            Token::ClosingChevron => write!(f, ">"),
-            Token::IdentifierEscape => write!(f, "_"),
-            Token::Path => write!(f, ":"),
-            Token::Macro => write!(f, "#"),
-            Token::Decimal => write!(f, ","),
-            Token::Stop => write!(f, "."),
-            Token::Separator => write!(f, "|"),
-            Token::Equal => write!(f, "="),
-            Token::StringQuote => write!(f, "\""),
-            Token::CharacterQuote => write!(f, "'"),
-            Token::Escape => write!(f, "\\"),
-            Token::Comment => write!(f, "/"),
-            Token::Other(other) => write!(f, "{}", other),
+            Kind::Space => write!(f, " "),
+            Kind::Tab => write!(f, "\t"),
+            Kind::NewLine => write!(f, "\n"),
+            Kind::Identifier(identifier) => write!(f, "{}", identifier),
+            Kind::Digit(digit) => write!(f, "{}", digit),
+            Kind::OpeningBracket => write!(f, "["),
+            Kind::ClosingBracket => write!(f, "]"),
+            Kind::OpeningChevron => write!(f, "<"),
+            Kind::ClosingChevron => write!(f, ">"),
+            Kind::IdentifierEscape => write!(f, "_"),
+            Kind::Path => write!(f, ":"),
+            Kind::Macro => write!(f, "#"),
+            Kind::Decimal => write!(f, ","),
+            Kind::Stop => write!(f, "."),
+            Kind::Separator => write!(f, "|"),
+            Kind::Equal => write!(f, "="),
+            Kind::StringQuote => write!(f, "\""),
+            Kind::CharacterQuote => write!(f, "'"),
+            Kind::Escape => write!(f, "\\"),
+            Kind::Comment => write!(f, "/"),
+            Kind::Other(other) => write!(f, "{}", other),
         }
     }
 }
@@ -65,28 +76,29 @@ impl<'a> std::fmt::Display for Token<'a> {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Mapping<'a> {
     pub character: char,
-    pub token: Token<'a>
+    pub token: Kind<'a>
 }
 
-impl<'a> Token<'a> {
-    pub const MAPPINGS: [Mapping<'a>; 17] = [
-        Mapping { character: ' ',  token: Token::Space            },
-        Mapping { character: '\t', token: Token::Tab              },
-        Mapping { character: '\n', token: Token::Newline          },
-        Mapping { character: '[',  token: Token::OpeningBracket   },
-        Mapping { character: ']',  token: Token::ClosingBracket   },
-        Mapping { character: '<',  token: Token::OpeningChevron   },
-        Mapping { character: '>',  token: Token::ClosingChevron   },
-        Mapping { character: '_',  token: Token::IdentifierEscape },
-        Mapping { character: ':',  token: Token::Path             },
-        Mapping { character: '#',  token: Token::Macro            },
-        Mapping { character: ',',  token: Token::Decimal          },
-        Mapping { character: '.',  token: Token::Stop             },
-        Mapping { character: '|',  token: Token::Separator        },
-        Mapping { character: '=',  token: Token::Equal            },
-        Mapping { character: '"',  token: Token::StringQuote      },
-        Mapping { character: '\'', token: Token::CharacterQuote   },
-        Mapping { character: '/',  token: Token::Comment          }
+impl<'a> Kind<'a> {
+    pub const MAPPINGS: [Mapping<'a>; 18] = [
+        Mapping { character: ' ',  token: Kind::Space            },
+        Mapping { character: '\t', token: Kind::Tab              },
+        Mapping { character: '\n', token: Kind::NewLine },
+        Mapping { character: '[',  token: Kind::OpeningBracket   },
+        Mapping { character: ']',  token: Kind::ClosingBracket   },
+        Mapping { character: '<',  token: Kind::OpeningChevron   },
+        Mapping { character: '>',  token: Kind::ClosingChevron   },
+        Mapping { character: '_',  token: Kind::IdentifierEscape },
+        Mapping { character: ':',  token: Kind::Path             },
+        Mapping { character: '#',  token: Kind::Macro            },
+        Mapping { character: ',',  token: Kind::Decimal          },
+        Mapping { character: '.',  token: Kind::Stop             },
+        Mapping { character: '|',  token: Kind::Separator        },
+        Mapping { character: '=',  token: Kind::Equal            },
+        Mapping { character: '"',  token: Kind::StringQuote      },
+        Mapping { character: '\'', token: Kind::CharacterQuote   },
+        Mapping { character: '\\',  token: Kind::Escape           },
+        Mapping { character: '/',  token: Kind::Comment          }
     ];
 }
 
@@ -94,6 +106,11 @@ impl<'a> Token<'a> {
 pub struct Iterator<'a> {
     source: &'a str,
     chars: Peekable<CharIndices<'a>>
+}
+
+
+impl<'a> Iterator<'a> {
+    pub fn source(&self) -> &'a str { self.source }
 }
 
 impl<'a> From<&'a str> for Iterator<'a> {
@@ -107,13 +124,13 @@ impl<'a> iter::Iterator for Iterator<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let peeked = self.chars.peek()?;
-        if let Some(mapped) = Token::MAPPINGS.iter().find(|item| item.character == peeked.1) {
+        if let Some(mapped) = Kind::MAPPINGS.iter().find(|item| item.character == peeked.1) {
             let _ = self.chars.next();
-            return Some(mapped.token)
+            return Some(Token { kind: mapped.token, byte_length: mapped.character.len_utf8() })
         }
         if let Some(digit) = peeked.1.to_digit(10) {
-            let _ = self.chars.next();
-            return Some(Token::Digit(digit as u8))
+            let character = self.chars.next().unwrap();
+            return Some(Token { kind: Kind::Digit(digit as u8), byte_length: character.1.len_utf8() })
         }
         
         let byte_start = peeked.0;
@@ -125,7 +142,10 @@ impl<'a> iter::Iterator for Iterator<'a> {
             let _ = self.chars.next();
         }
 
-        if byte_end == byte_start { return Some(Token::Other(self.chars.next()?.1)) }
-        Some(Token::Identifier(&self.source[byte_start..byte_end]))
+        if byte_end == byte_start { 
+            let character = self.chars.next()?.1;
+            return Some(Token { kind: Kind::Other(character), byte_length: character.len_utf8() })
+        }
+        Some(Token { kind: Kind::Identifier(&self.source[byte_start..byte_end]), byte_length: byte_end - byte_start })
     }
 }
