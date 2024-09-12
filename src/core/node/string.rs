@@ -2,22 +2,25 @@ use crate::core::node;
 use crate::core::node::{NodeVariant, Parsable, Traverser};
 use crate::core::token::Kind;
 
-// fixme: Use &'a str and setup tokens to track char indexes.
-pub type Node = node::Node<Box<str>>;
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct String<'a>(&'a str);
 
-impl<'a> Parsable<'a> for Node {
+pub type Node<'a> = node::Node<String<'a>>;
+
+impl<'a> Parsable<'a> for Node<'a> {
     type Error = ();
 
     fn parse(traverser: &mut Traverser<'a>) -> Result<Self, node::Error<'a, ()>> {
         let start = traverser.token_offset();
         let _ = traverser.expect_token(&Kind::StringQuote)?;
-        let mut accumulator = String::new();
+        let byte_start = traverser.byte_offset();
+        let mut byte_end = byte_start;
         let mut escaping = false;
 
         while let Some(peeked) = traverser.peek() {
             match peeked.kind() {
                 Kind::Escape => {
-                    if escaping { accumulator.push('\\') }
+                    if escaping { byte_end += '\\'.len_utf8() }
                     escaping = !escaping;
                 },
                 Kind::StringQuote => {
@@ -26,18 +29,18 @@ impl<'a> Parsable<'a> for Node {
                         break
                     }
                     escaping = false;
-                    accumulator.push('"');
+                    byte_end += '"'.len_utf8();
                 },
                 _ => {
                     if escaping { return Err(traverser.new_other_error(())) }
-                    accumulator = format!("{accumulator}{}", peeked.kind())
+                    byte_end = peeked.kind().to_string().len(); // fixme: performance bottleneck
                 }
             }
             
             let _ = traverser.next();
         }
 
-        traverser.end(start, accumulator.into_boxed_str())
+        traverser.end(start, String(&traverser.source()[byte_start..byte_end]))
     }
 
     fn nodes(&self) -> Option<Vec<NodeVariant>> { None }

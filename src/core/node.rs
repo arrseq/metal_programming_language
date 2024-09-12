@@ -22,7 +22,7 @@ pub enum NodeKind {
 #[derive(Debug, Clone, PartialEq)]
 pub enum NodeVariant<'a> {
     WhiteSpace(whitespace::Node),
-    String(string::Node),
+    String(string::Node<'a>),
     Identifier(identifier::Node<'a>)
 }
 
@@ -83,6 +83,7 @@ pub struct Traverser<'a> {
 impl<'a> Traverser<'a> {
     pub const fn token_offset(&self) -> usize { self.token_offset }
     pub const fn byte_offset(&self) -> usize { self.string_byte_offset }
+    pub const fn source(&self) -> &'a str { self.source }
 
     pub const fn new_error<Other: Debug + PartialEq>(&self, kind: ErrorKind<'a, Other>) -> Error<'a, Other> {
         Error {
