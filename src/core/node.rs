@@ -5,7 +5,6 @@ pub mod whitespace;
 #[cfg(test)]
 mod test;
 
-use std::cell::RefCell;
 use std::fmt::Debug;
 use std::iter::Peekable;
 use thiserror::Error;

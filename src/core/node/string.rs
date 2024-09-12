@@ -33,7 +33,7 @@ impl<'a> Parsable<'a> for Node<'a> {
                 },
                 _ => {
                     if escaping { return Err(traverser.new_other_error(())) }
-                    byte_end = peeked.kind().to_string().len(); // fixme: performance bottleneck
+                    byte_end = peeked.byte_length()
                 }
             }
             
