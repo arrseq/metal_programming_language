@@ -1,7 +1,7 @@
 use colored::Colorize;
 use metal_programming_language::core::node::string::Node;
 use metal_programming_language::core::token;
-use metal_programming_language::core::token::Token;
+use metal_programming_language::core::token::Kind;
 
 fn main() {
     let mut tokens = token::Iterator::from(include_str!("./variable/math.mtx"));
@@ -10,10 +10,10 @@ fn main() {
     for token in tokens {
         let token_string = String::from(token);
         let painted = match token {
-            Token::Space => token_string.white(),
-            Token::Tab => token_string.white(),
-            Token::Newline => token_string.white(),
-            Token::Identifier(i) => match i {
+            Kind::Space => token_string.white(),
+            Kind::Tab => token_string.white(),
+            Kind::NewLine => token_string.white(),
+            Kind::Identifier(i) => match i {
                 "fun" 
                 | "var"
                 | "struct"
@@ -21,22 +21,22 @@ fn main() {
                 | "depend" => token_string.red(),
                 _ => token_string.white()
             },
-            Token::Digit(_) => token_string.cyan(),
-            Token::OpeningBracket => token_string.white(),
-            Token::ClosingBracket => token_string.white(),
-            Token::OpeningChevron => token_string.white(),
-            Token::ClosingChevron => token_string.white(),
-            Token::Path => token_string.bright_red(),
-            Token::Macro => token_string.bright_yellow(),
-            Token::Decimal => token_string.red(),
-            Token::Stop => token_string.red(),
-            Token::Separator => token_string.cyan(),
-            Token::Equal => token_string.cyan(),
-            Token::StringQuote => token_string.green(),
-            Token::CharacterQuote => token_string.green(),
-            Token::Escape => token_string.yellow(),
-            Token::Comment => token_string.bright_black(),
-            Token::Other(_) => token_string.magenta()
+            Kind::Digit(_) => token_string.cyan(),
+            Kind::OpeningBracket => token_string.white(),
+            Kind::ClosingBracket => token_string.white(),
+            Kind::OpeningChevron => token_string.white(),
+            Kind::ClosingChevron => token_string.white(),
+            Kind::Path => token_string.bright_red(),
+            Kind::Macro => token_string.bright_yellow(),
+            Kind::Decimal => token_string.red(),
+            Kind::Stop => token_string.red(),
+            Kind::Separator => token_string.cyan(),
+            Kind::Equal => token_string.cyan(),
+            Kind::StringQuote => token_string.green(),
+            Kind::CharacterQuote => token_string.green(),
+            Kind::Escape => token_string.yellow(),
+            Kind::Comment => token_string.bright_black(),
+            Kind::Other(_) => token_string.magenta()
         };
         
         print!("{}", painted);

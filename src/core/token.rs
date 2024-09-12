@@ -41,7 +41,7 @@ pub struct Token<'a> {
 }
 
 impl<'a> Token<'a> {
-    pub fn kind(&self) -> Kind<'a> { self.kind }
+    pub fn kind(&self) -> &Kind<'a> { &self.kind }
     pub fn byte_length(&self) -> usize { self.byte_length }
 }
 
