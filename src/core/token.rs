@@ -1,6 +1,3 @@
-// # . , [ | ] = " < > \
-
-use std::fmt::write;
 use std::iter;
 use std::iter::Peekable;
 use std::str::CharIndices;
@@ -85,7 +82,7 @@ impl<'a> Kind<'a> {
     pub const MAPPINGS: [Mapping<'a>; 19] = [
         Mapping { character: ' ',  token: Kind::Space            },
         Mapping { character: '\t', token: Kind::Tab              },
-        Mapping { character: '\n', token: Kind::NewLine },
+        Mapping { character: '\n', token: Kind::NewLine          },
         Mapping { character: '[',  token: Kind::OpeningBracket   },
         Mapping { character: ']',  token: Kind::ClosingBracket   },
         Mapping { character: '<',  token: Kind::OpeningChevron   },
@@ -100,7 +97,7 @@ impl<'a> Kind<'a> {
         Mapping { character: '=',  token: Kind::Equal            },
         Mapping { character: '"',  token: Kind::StringQuote      },
         Mapping { character: '\'', token: Kind::CharacterQuote   },
-        Mapping { character: '\\',  token: Kind::Escape           },
+        Mapping { character: '\\',  token: Kind::Escape          },
         Mapping { character: '/',  token: Kind::Comment          }
     ];
 }
