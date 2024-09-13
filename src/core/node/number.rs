@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::ops::Neg;
 use thiserror::Error;
 use crate::core::{node, token};
 use crate::core::node::{ErrorKind, NodeVariant, Parsable, Traverser};
@@ -16,7 +17,9 @@ pub type Node = node::Node<Number>;
 #[derive(Debug, Error, PartialEq)]
 pub enum Error {
     #[error("The number is too large to be stored as a literal")]
-    Overflowing,
+    OverflowingWhole,
+    #[error("The fractional component is too large to be stored as a literal")]
+    OverflowingFractional,
     #[error("Expected whole number")]
     ExpectedWholeNumberComponent,
     #[error("Expected fractional number after decimal separator")]
@@ -39,13 +42,34 @@ impl<'a> Node {
         let mut power = 0u32;
 
         while let Some(digit) = Self::next_digit(tokens) {
-            value += 10u64.pow(power) * digit as u64;
-            power.checked_add(1).ok_or(tokens.new_other_error(Error::Overflowing))?;
-            power += 1;
+            let digit_offset = 10u64
+                .pow(power)
+                .checked_mul(digit as u64).ok_or(tokens.new_other_error(Error::OverflowingWhole))?;
+            value = value
+                .checked_add(digit_offset)
+                .ok_or(tokens.new_other_error(Error::OverflowingWhole))?;
+            power = power
+                .checked_add(1)
+                .ok_or(tokens.new_other_error(Error::OverflowingWhole))?;
         }
 
         if power == 0 { return Err(tokens.new_other_error(Error::ExpectedWholeNumberComponent)) }
         Ok(value)
+    }
+    
+    fn next_decimal(tokens: &mut Traverser<'a>) -> Result<f64, node::Error<<Self as Parsable<'a>>::Error>> {
+        let mut accumulator = 0f64;
+        let mut division = 0i32;
+        
+        while let Some(digit) = Self::next_digit(tokens) {
+            // adding to the divisor is done first so that we can check to see if digits were read 
+            // by testing whether the division is not zero.
+            division = division.checked_add(1).ok_or(tokens.new_other_error(Error::OverflowingFractional))?;
+            accumulator += digit as f64 / 10f64.powi(division);
+        }
+        
+        if division == 0 { return Err(tokens.new_other_error(Error::ExpectedFractionalNumberComponent)) }
+        Ok(accumulator)
     }
 }
 
@@ -59,11 +83,14 @@ impl<'a> Parsable<'a> for Node {
         let is_fractional = tokens.skip_token(&token::Kind::Decimal).is_some();
 
         if is_fractional {
-            todo!()
+            let mut fractional = Self::next_decimal(tokens)?;
+            fractional += whole as f64; // fixme: check for data inconsistency potential.
+            if is_negative { fractional = fractional.neg() }
+            return tokens.end(start, Number::Float(fractional));
         }
 
         if is_negative {
-            let negated = -i64::try_from(whole).map_err(|_| tokens.new_other_error(Error::Overflowing))?;
+            let negated = -i64::try_from(whole).map_err(|_| tokens.new_other_error(Error::OverflowingWhole))?;
             return tokens.end(start, Number::Signed(negated));
         }
 

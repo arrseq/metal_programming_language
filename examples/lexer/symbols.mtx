@@ -10,5 +10,7 @@ table_1   column_1        column_2        column_3
           2045            8092            -10000
 
 table_2   column_1        column_2        column_3
-          5000            500             7200
+          -754,2          500,79          7200
           182             "string"        identifier
+
+Invalid Number "=" 10000000000000000000000000000000000000000000000000000000000000
