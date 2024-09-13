@@ -150,11 +150,9 @@ impl<'a> Traverser<'a> {
     pub fn peek(&mut self) -> Option<&Token<'a>> {
         self.tokens.peek()
     }
-}
 
-impl<'a> From<&'a str> for Traverser<'a> {
-    fn from(value: &'a str) -> Self {
-        let tokens = token::Iterator::from(value);
+    pub fn from_str(value: &'a str) -> Self {
+        let tokens = token::Iterator::from_str(value);
         let source = tokens.source();
 
         Self {

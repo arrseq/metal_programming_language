@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use metal_programming_language::core::{node, token};
 use metal_programming_language::core::node::{identifier, number, string, whitespace, Error, ErrorKind, NodeVariant, Parsable, Traverser};
 use inline_colorization::*;
+use metal_programming_language::core::node::number::Number;
 use metal_programming_language::core::node::string::Node;
 use metal_programming_language::core::token::{Kind, Token};
 
@@ -12,17 +13,17 @@ fn indent(line: usize) {
 
 fn print_error<Other: Debug + PartialEq>(error: node::Error<Other>, source: &str) {
     eprintln!("Parse error: Could not parse token {} because:", error.start_token);
-    match error.kind {
-        ErrorKind::ReachedEndForTokens { tokens } => eprintln!("  -   Reached end when expecting the {color_cyan}{tokens:?}{color_reset} token"),
-        ErrorKind::ReachedEndForNodes { .. } => eprintln!("  -   Reached end when expecting node"),
-        ErrorKind::UnexpectedTokens { expectation, received } => eprintln!("  -   Expected either one of the tokens from {color_cyan}{expectation:?}{color_reset} but instead received {color_yellow}{received}{color_reset}"),
-        ErrorKind::UnexpectedNodes { .. } => eprintln!("  -   Expected node"),
-        ErrorKind::Other(other) => eprintln!("  Other: {:?}", other),
-        _ => todo!()
-    }
+    // match error.kind {
+    //     ErrorKind::ReachedEndForTokens { tokens } => eprintln!("  -   Reached end when expecting the {color_cyan}{tokens:?}{color_reset} token"),
+    //     ErrorKind::ReachedEndForNodes { .. } => eprintln!("  -   Reached end when expecting node"),
+    //     ErrorKind::UnexpectedTokens { expectation, received } => eprintln!("  -   Expected either one of the tokens from {color_cyan}{expectation:?}{color_reset} but instead received {color_yellow}{received}{color_reset}"),
+    //     ErrorKind::UnexpectedNodes { .. } => eprintln!("  -   Expected node"),
+    //     ErrorKind::Other(other) => eprintln!("  Other: {:?}", other),
+    //     _ => todo!()
+    // }
     
     eprintln!("Input:");
-    let stream = token::Iterator::from(source);
+    let stream = token::Iterator::from_str(source);
     
     indent(0);
     
@@ -46,7 +47,9 @@ enum Color {
     Red,
     White,
     Cyan,
-    Purple
+    Purple,
+    Green,
+    Yellow
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -55,14 +58,14 @@ struct DecoratedToken<'a> {
     token: Token<'a>
 }
 
-fn try_node<'a, Node: Parsable<'a>, Other: Debug + PartialEq>(output: &mut Vec<NodeVariant<'a>>, tokens: &mut Traverser<'a>, mut parse: impl FnMut(&mut Traverser<'a>) -> Result<NodeVariant<'a>, Error<'a, Other>>) -> Result<(), Error<'a, Other>> {
+fn try_node<'a, Node: Parsable<'a>, Other: Debug + PartialEq>(output: &mut Vec<NodeVariant<'a>>, tokens: &mut Traverser<'a>, mut parse: impl FnMut(&mut Traverser<'a>) -> Result<NodeVariant<'a>, Error<Other>>) -> Result<(), Error<Other>> {
     output.push(tokens.as_restorable(|restorable| parse(restorable))?);
     Ok(())
 }
 
 fn main() {
     let source = include_str!("./lexer/symbols.mtx");
-    let mut tokens = node::Traverser::from(source);
+    let mut tokens = node::Traverser::from_str(source);
     
     let mut nodes = Vec::new();
     loop {
@@ -73,7 +76,7 @@ fn main() {
         break
     }
     
-    let mut source_tokens = Traverser::from(source);
+    let mut source_tokens = Traverser::from_str(source);
     let mut nodes = nodes.iter();
     let mut colored = Vec::new();
     
@@ -82,7 +85,14 @@ fn main() {
             NodeVariant::WhiteSpace(n) => (Color::White, n.start_token(), n.end_token()),
             NodeVariant::String(n) => (Color::Red, n.start_token(), n.end_token()),
             NodeVariant::Identifier(id) => (Color::Cyan, id.start_token(), id.end_token()),
-            NodeVariant::Number(id) => (Color::Purple, id.start_token(), id.end_token())
+            NodeVariant::Number(id) => {
+                let color = match id.data() {
+                    Number::UnSigned(_) => Color::Yellow,
+                    Number::Signed(_) => Color::Green,
+                    Number::Float(_) => Color::Purple
+                };
+                (color, id.start_token(), id.end_token())
+            }
         };
         
         let offset = start - source_tokens.token_offset();
@@ -107,7 +117,9 @@ fn main() {
             Color::Red => print!("{color_red}{}{color_reset}", token.token.kind()),
             Color::White => print!("{}", token.token.kind()),
             Color::Cyan => print!("{color_cyan}{}{color_reset}", token.token.kind()),
-            Color::Purple => print!("{color_magenta}{}{color_reset}", token.token.kind())
+            Color::Purple => print!("{color_magenta}{}{color_reset}", token.token.kind()),
+            Color::Green => print!("{color_green}{}{color_reset}", token.token.kind()),
+            Color::Yellow => print!("{color_yellow}{}{color_reset}", token.token.kind())
         }
     }
 }

@@ -108,15 +108,9 @@ pub struct Iterator<'a> {
     chars: Peekable<CharIndices<'a>>
 }
 
-
 impl<'a> Iterator<'a> {
+    pub fn from_str(value: &'a str) -> Self { Self { source: value, chars: iter::Iterator::peekable(value.char_indices()) }}
     pub fn source(&self) -> &'a str { self.source }
-}
-
-impl<'a> From<&'a str> for Iterator<'a> {
-    fn from(value: &'a str) -> Self {
-        Self { source: value, chars: iter::Iterator::peekable(value.char_indices()) }
-    }
 }
 
 impl<'a> iter::Iterator for Iterator<'a> {

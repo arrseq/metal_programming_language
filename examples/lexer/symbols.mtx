@@ -1,1 +1,14 @@
-"hello" 14 "world"
+"the following text will have the number highlighted"
+wow there are around 14 items in that box
+"this is a string, the number 18371 will not be parsed as a number"
+
+"The identifier below has a number, but the number is part of the identifier"
+
+table_1   column_1        column_2        column_3
+          -3383888888     754             -1024
+          -5000           -1              0
+          2045            8092            -10000
+
+table_2   column_1        column_2        column_3
+          5000            500             7200
+          182             "string"        identifier

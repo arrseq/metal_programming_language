@@ -34,17 +34,18 @@ impl<'a> Node {
         None
     }
 
-    fn next_number<Other: Debug + PartialEq>(tokens: &mut Traverser<'a>) -> Result<u64, node::Error<Other>> {
-        let mut value = 0;
-        let mut power = 0;
-        
-        while let Ok(digit) = Self::next_digit::<Other>(tokens) {
-            
+    fn next_number(tokens: &mut Traverser<'a>) -> Result<u64, node::Error<<Self as Parsable<'a>>::Error>> {
+        let mut value = 0u64;
+        let mut power = 0u32;
+
+        while let Some(digit) = Self::next_digit(tokens) {
+            value += 10u64.pow(power) * digit as u64;
+            power.checked_add(1).ok_or(tokens.new_other_error(Error::Overflowing))?;
+            power += 1;
         }
-        
-        if power == 0 {  }
-        
-        todo!()
+
+        if power == 0 { return Err(tokens.new_other_error(Error::ExpectedWholeNumberComponent)) }
+        Ok(value)
     }
 }
 
@@ -54,8 +55,19 @@ impl<'a> Parsable<'a> for Node {
     fn parse(tokens: &mut Traverser<'a>) -> Result<Self, node::Error<Self::Error>> {
         let start = tokens.token_offset();
         let is_negative = tokens.skip_token(&token::Kind::Negate).is_some();
-        
-        todo!()
+        let whole = Self::next_number(tokens)?;
+        let is_fractional = tokens.skip_token(&token::Kind::Decimal).is_some();
+
+        if is_fractional {
+            todo!()
+        }
+
+        if is_negative {
+            let negated = -i64::try_from(whole).map_err(|_| tokens.new_other_error(Error::Overflowing))?;
+            return tokens.end(start, Number::Signed(negated));
+        }
+
+        tokens.end(start, Number::UnSigned(whole))
     }
 
     fn nodes(&self) -> Option<Vec<NodeVariant>> { None }
