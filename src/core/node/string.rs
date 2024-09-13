@@ -2,15 +2,12 @@ use crate::core::node;
 use crate::core::node::{NodeVariant, Parsable, Traverser};
 use crate::core::token::Kind;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct String<'a>(&'a str);
-
-pub type Node<'a> = node::Node<String<'a>>;
+pub type Node<'a> = node::Node<&'a str>;
 
 impl<'a> Parsable<'a> for Node<'a> {
     type Error = ();
 
-    fn parse(traverser: &mut Traverser<'a>) -> Result<Self, node::Error<'a, ()>> {
+    fn parse(traverser: &mut Traverser<'a>) -> Result<Self, node::Error<()>> {
         let start = traverser.token_offset();
         let _ = traverser.expect_token(&Kind::StringQuote)?;
         let byte_start = traverser.byte_offset();
@@ -40,7 +37,7 @@ impl<'a> Parsable<'a> for Node<'a> {
             let _ = traverser.next();
         }
 
-        traverser.end(start, String(&traverser.source()[byte_start..byte_end]))
+        traverser.end(start, &traverser.source()[byte_start..byte_end])
     }
 
     fn nodes(&self) -> Option<Vec<NodeVariant>> { None }

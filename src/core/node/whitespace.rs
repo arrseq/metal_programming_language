@@ -19,7 +19,7 @@ impl<'a> Node {
 impl<'a> Parsable<'a> for Node {
     type Error = ();
 
-    fn parse(traverser: &mut Traverser<'a>) -> Result<Self, node::Error<'a, Self::Error>> {
+    fn parse(traverser: &mut Traverser<'a>) -> Result<Self, node::Error<Self::Error>> {
         let start = traverser.token_offset();
         let mut accumulator = Vec::new();
         loop {

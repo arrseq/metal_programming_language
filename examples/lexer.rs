@@ -1,7 +1,7 @@
 use std::cell::{Cell, RefCell};
 use std::fmt::Debug;
 use metal_programming_language::core::{node, token};
-use metal_programming_language::core::node::{identifier, string, whitespace, Error, ErrorKind, NodeVariant, Parsable, Traverser};
+use metal_programming_language::core::node::{identifier, number, string, whitespace, Error, ErrorKind, NodeVariant, Parsable, Traverser};
 use inline_colorization::*;
 use metal_programming_language::core::node::string::Node;
 use metal_programming_language::core::token::{Kind, Token};
@@ -45,7 +45,8 @@ fn print_error<Other: Debug + PartialEq>(error: node::Error<Other>, source: &str
 enum Color {
     Red,
     White,
-    Cyan
+    Cyan,
+    Purple
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -65,9 +66,10 @@ fn main() {
     
     let mut nodes = Vec::new();
     loop {
-        let _ = whitespace::Node::parse(&mut tokens);
+        if try_node::<whitespace::Node, <whitespace::Node as Parsable>::Error>(&mut nodes, &mut tokens, |x| Ok(NodeVariant::WhiteSpace(whitespace::Node::parse(x)?))).is_ok() { continue }
         if try_node::<string::Node, <string::Node as Parsable>::Error>(&mut nodes, &mut tokens, |x| Ok(NodeVariant::String(string::Node::parse(x)?))).is_ok() { continue }
         if try_node::<identifier::Node, <identifier::Node as Parsable>::Error>(&mut nodes, &mut tokens, |x| Ok(NodeVariant::Identifier(identifier::Node::parse(x)?))).is_ok() { continue }
+        if try_node::<number::Node, <number::Node as Parsable>::Error>(&mut nodes, &mut tokens, |x| Ok(NodeVariant::Number(number::Node::parse(x)?))).is_ok() { continue }
         break
     }
     
@@ -79,7 +81,8 @@ fn main() {
         let (color, start, end) = match node {
             NodeVariant::WhiteSpace(n) => (Color::White, n.start_token(), n.end_token()),
             NodeVariant::String(n) => (Color::Red, n.start_token(), n.end_token()),
-            NodeVariant::Identifier(id) => (Color::Cyan, id.start_token(), id.end_token())
+            NodeVariant::Identifier(id) => (Color::Cyan, id.start_token(), id.end_token()),
+            NodeVariant::Number(id) => (Color::Purple, id.start_token(), id.end_token())
         };
         
         let offset = start - source_tokens.token_offset();
@@ -103,7 +106,8 @@ fn main() {
         match token.color {
             Color::Red => print!("{color_red}{}{color_reset}", token.token.kind()),
             Color::White => print!("{}", token.token.kind()),
-            Color::Cyan => print!("{color_cyan}{}{color_reset}", token.token.kind())
+            Color::Cyan => print!("{color_cyan}{}{color_reset}", token.token.kind()),
+            Color::Purple => print!("{color_magenta}{}{color_reset}", token.token.kind())
         }
     }
 }

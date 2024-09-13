@@ -19,6 +19,7 @@ pub enum Kind<'a> {
     OpeningChevron,
     ClosingChevron,
 
+    Negate,
     IdentifierEscape,
     Path,
     Macro,
@@ -57,6 +58,7 @@ impl<'a> std::fmt::Display for Kind<'a> {
             Kind::ClosingBracket => write!(f, "]"),
             Kind::OpeningChevron => write!(f, "<"),
             Kind::ClosingChevron => write!(f, ">"),
+            Kind::Negate => write!(f, "-"),
             Kind::IdentifierEscape => write!(f, "_"),
             Kind::Path => write!(f, ":"),
             Kind::Macro => write!(f, "#"),
@@ -80,7 +82,7 @@ pub struct Mapping<'a> {
 }
 
 impl<'a> Kind<'a> {
-    pub const MAPPINGS: [Mapping<'a>; 18] = [
+    pub const MAPPINGS: [Mapping<'a>; 19] = [
         Mapping { character: ' ',  token: Kind::Space            },
         Mapping { character: '\t', token: Kind::Tab              },
         Mapping { character: '\n', token: Kind::NewLine },
@@ -88,6 +90,7 @@ impl<'a> Kind<'a> {
         Mapping { character: ']',  token: Kind::ClosingBracket   },
         Mapping { character: '<',  token: Kind::OpeningChevron   },
         Mapping { character: '>',  token: Kind::ClosingChevron   },
+        Mapping { character: '-',  token: Kind::Negate           },
         Mapping { character: '_',  token: Kind::IdentifierEscape },
         Mapping { character: ':',  token: Kind::Path             },
         Mapping { character: '#',  token: Kind::Macro            },

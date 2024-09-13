@@ -1,6 +1,7 @@
 pub mod identifier;
 pub mod string;
 pub mod whitespace;
+pub mod number;
 
 #[cfg(test)]
 mod test;
@@ -15,14 +16,16 @@ use crate::core::token::{Kind, Token};
 pub enum NodeKind {
     WhiteSpace,
     String,
-    Identifier
+    Identifier,
+    Number
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum NodeVariant<'a> {
     WhiteSpace(whitespace::Node),
     String(string::Node<'a>),
-    Identifier(identifier::Node<'a>)
+    Identifier(identifier::Node<'a>),
+    Number(number::Node)
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -39,35 +42,21 @@ impl<Data: Debug + Clone + PartialEq> Node<Data> {
 }
 
 #[derive(Debug, Error, PartialEq)]
-pub enum ErrorKind<'a, Other: Debug + PartialEq> {
-    #[error("Reached the end of the parsable stream when {tokens:?} was expected")]
-    ReachedEndForTokens { tokens: Box<[Kind<'a>]> },
-    #[error("Reached the end of the parsable stream when {nodes:?} was expected")]
-    ReachedEndForNodes { nodes: Box<[NodeKind]> },
-    #[error("Reached the end of the parsable stream when {token} was expected")]
-    ReachedEndForToken { token: Kind<'a> },
-    #[error("Reached the end of the parsable stream when {node:?} was expected")]
-    ReachedEndForNode { node: NodeKind },
-    #[error("Expected token {expectation:?} but received {received} instead")]
-    UnexpectedTokens { expectation: Box<[Kind<'a>]>, received: Kind<'a> },
-    #[error("Expected node {expectation:?} but received {received:?} instead")]
-    UnexpectedNodes { expectation: Box<[NodeKind]>, received: NodeKind },
-    #[error("Expected token {expectation:?} but received {received} instead")]
-    UnexpectedToken { expectation: Kind<'a>, received: Kind<'a> },
-    #[error("Expected node {expectation:?} but received {received:?} instead")]
-    UnexpectedNode { expectation: NodeKind, received: NodeKind },
-    #[error("Expected an identifier but received {received} instead")]
-    ExpectedIdentifier { received: Kind<'a> },
-    #[error("Expected an identifier but reached the end instead")]
-    ReachedIdentifierEnd,
+pub enum ErrorKind<Other: Debug + PartialEq> {
+    #[error("Reached the end of stream when attempting to match a token")]
+    ReachedEndForToken,
+    #[error("Reached the end of stream when attempting to match a node")]
+    ReachedEndForNode,
+    #[error("An unexpected token was encountered")]
+    UnexpectedToken,
     #[error("Failed to parse node due to other reason")]
     Other(Other)
 }
 
 #[derive(Debug, Error, PartialEq)]
 #[error("Failed to parse a node")]
-pub struct Error<'a, Other: Debug + PartialEq> {
-    pub kind: ErrorKind<'a, Other>,
+pub struct Error<Other: Debug + PartialEq> {
+    pub kind: ErrorKind<Other>,
     pub start_token: usize
 }
 
@@ -84,18 +73,18 @@ impl<'a> Traverser<'a> {
     pub const fn byte_offset(&self) -> usize { self.string_byte_offset }
     pub const fn source(&self) -> &'a str { self.source }
 
-    pub const fn new_error<Other: Debug + PartialEq>(&self, kind: ErrorKind<'a, Other>) -> Error<'a, Other> {
+    pub const fn new_error<Other: Debug + PartialEq>(&self, kind: ErrorKind<Other>) -> Error<Other> {
         Error {
             kind,
             start_token: self.token_offset,
         }
     }
 
-    pub const fn new_other_error<Other: Debug + PartialEq>(&self, other: Other) -> Error<'a, Other> {
+    pub const fn new_other_error<Other: Debug + PartialEq>(&self, other: Other) -> Error<Other> {
         self.new_error(ErrorKind::Other(other))
     }
 
-    pub const fn end<Other: Debug + PartialEq, Data: Debug + Clone + PartialEq>(&self, start: usize, data: Data) -> Result<Node<Data>, Error<'a, Other>> {
+    pub const fn end<Other: Debug + PartialEq, Data: Debug + Clone + PartialEq>(&self, start: usize, data: Data) -> Result<Node<Data>, Error<Other>> {
         Ok(Node {
             start_token: start,
             end_token: self.token_offset,
@@ -103,12 +92,24 @@ impl<'a> Traverser<'a> {
         })
     }
 
-    pub fn expect_tokens<Other: Debug + PartialEq>(&mut self, tokens: &[Kind<'a>]) -> Result<Token<'a>, Error<'a, Other>> {
+    pub fn skip_tokens(&mut self, tokens: &[Kind<'a>]) -> Option<Token> {
+        let peeked = self.peek()?;
+        if !tokens.iter().any(|x| x == peeked.kind()) { return None }
+        Some(*peeked)
+    }
+
+    pub fn skip_token(&mut self, token: &Kind<'a>) -> Option<Token> {
+        let peeked = self.peek()?;
+        if token != peeked.kind() { return None }
+        self.next()
+    }
+
+    pub fn expect_tokens<Other: Debug + PartialEq>(&mut self, tokens: &[Kind<'a>]) -> Result<Token<'a>, Error<Other>> {
         let peeked = self.tokens
             .peek()
             .ok_or(Error {
                 start_token: self.token_offset,
-                kind: ErrorKind::ReachedEndForTokens { tokens: Box::from(tokens) },
+                kind: ErrorKind::ReachedEndForToken,
             })?;
 
         for &token in tokens { if peeked.kind() == &token {
@@ -116,16 +117,15 @@ impl<'a> Traverser<'a> {
             return Ok(matched_token);
         }}
 
-        let kind = ErrorKind::UnexpectedTokens { expectation: Box::from(tokens), received: *peeked.kind() };
-        Err(self.new_error(kind))
+        Err(self.new_error(ErrorKind::UnexpectedToken))
     }
 
-    pub fn expect_token<Other: Debug + PartialEq>(&mut self, token: &Kind<'a>) -> Result<Token<'a>, Error<'a, Other>> {
+    pub fn expect_token<Other: Debug + PartialEq>(&mut self, token: &Kind<'a>) -> Result<Token<'a>, Error<Other>> {
         let peeked = self.tokens
             .peek()
             .ok_or(Error {
                 start_token: self.token_offset,
-                kind: ErrorKind::ReachedEndForToken { token: *token },
+                kind: ErrorKind::ReachedEndForToken,
             })?;
         
         if peeked.kind() == token {
@@ -133,8 +133,7 @@ impl<'a> Traverser<'a> {
             return Ok(matched_token);
         }
 
-        let kind = ErrorKind::UnexpectedToken { expectation: *token, received: *peeked.kind() };
-        Err(self.new_error(kind))
+        Err(self.new_error(ErrorKind::UnexpectedToken))
     }
 
     pub fn as_restorable<T, E>(&mut self, mut process: impl FnMut(&mut Self) -> Result<T, E>) -> Result<T, E> {
@@ -148,25 +147,6 @@ impl<'a> Traverser<'a> {
         }
     }
 
-    pub fn next_identifier<Other: Debug + PartialEq>(&mut self) -> Result<&'a str, Error<'a, Other>> {
-        let Some(peeked) = self.peek() else { return Err(self.new_error(ErrorKind::ReachedIdentifierEnd)) };
-        if let Kind::Identifier(identifier) = *peeked.kind() {
-            let  _ = self.next().unwrap();
-            return Ok(identifier);
-        }
-        
-        let copied_peek = *peeked.kind();
-        Err(self.new_error(ErrorKind::ExpectedIdentifier { received: copied_peek }))
-    }
-
-    // pub fn next_digit<Other: Debug + PartialEq>(&mut self) -> Result<u8, Error<Other>> {
-    //     if let Token::Digit(peeked) = *self.tokens.peek()? {
-    //         self.next()?;
-    //         return Some(peeked)
-    //     }
-    //     None
-    // }
-
     pub fn peek(&mut self) -> Option<&Token<'a>> {
         self.tokens.peek()
     }
@@ -176,7 +156,7 @@ impl<'a> From<&'a str> for Traverser<'a> {
     fn from(value: &'a str) -> Self {
         let tokens = token::Iterator::from(value);
         let source = tokens.source();
-        
+
         Self {
             source,
             tokens: tokens.peekable(),
@@ -198,6 +178,6 @@ impl<'a> Iterator for Traverser<'a> {
 
 pub trait Parsable<'a>: Sized {
     type Error: Debug + PartialEq;
-    fn parse(tokens: &mut Traverser<'a>) -> Result<Self, node::Error<'a, Self::Error>>;
+    fn parse(tokens: &mut Traverser<'a>) -> Result<Self, node::Error<Self::Error>>;
     fn nodes(&self) -> Option<Vec<NodeVariant>>;
 }
