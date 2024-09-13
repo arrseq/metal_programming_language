@@ -1,5 +1,5 @@
 use std::fmt::Debug;
-use std::ops::Neg;
+use std::ops::{Add, Neg};
 use thiserror::Error;
 use crate::core::{node, token};
 use crate::core::node::{ErrorKind, NodeVariant, Parsable, Traverser};
@@ -43,11 +43,14 @@ impl<'a> Node {
 
         while let Some(digit) = Self::next_digit(tokens) {
             let digit_offset = 10u64
-                .pow(power)
-                .checked_mul(digit as u64).ok_or(tokens.new_other_error(Error::OverflowingWhole))?;
+                .checked_pow(power)
+                .ok_or(tokens.new_other_error(Error::OverflowingWhole))?
+                .checked_mul(digit as u64)
+                .ok_or(tokens.new_other_error(Error::OverflowingWhole))?;
             value = value
                 .checked_add(digit_offset)
                 .ok_or(tokens.new_other_error(Error::OverflowingWhole))?;
+
             power = power
                 .checked_add(1)
                 .ok_or(tokens.new_other_error(Error::OverflowingWhole))?;
@@ -56,18 +59,23 @@ impl<'a> Node {
         if power == 0 { return Err(tokens.new_other_error(Error::ExpectedWholeNumberComponent)) }
         Ok(value)
     }
-    
+
     fn next_decimal(tokens: &mut Traverser<'a>) -> Result<f64, node::Error<<Self as Parsable<'a>>::Error>> {
         let mut accumulator = 0f64;
         let mut division = 0i32;
-        
+
         while let Some(digit) = Self::next_digit(tokens) {
-            // adding to the divisor is done first so that we can check to see if digits were read 
+            // adding to the divisor is done first so that we can check to see if digits were read
             // by testing whether the division is not zero.
-            division = division.checked_add(1).ok_or(tokens.new_other_error(Error::OverflowingFractional))?;
-            accumulator += digit as f64 / 10f64.powi(division);
+            division = division
+                .checked_add(1)
+                .ok_or(tokens.new_other_error(Error::OverflowingFractional))?;
+
+            // fixme: Floats do not overflow, but we need to wash out numbers that are wastefully
+            // fixme: large and are infinity.
+            accumulator = accumulator.add(digit as f64 / 10f64.powi(division));
         }
-        
+
         if division == 0 { return Err(tokens.new_other_error(Error::ExpectedFractionalNumberComponent)) }
         Ok(accumulator)
     }
