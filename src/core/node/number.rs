@@ -104,6 +104,4 @@ impl<'a> Parsable<'a> for Node {
 
         tokens.end(start, Number::UnSigned(whole))
     }
-
-    fn nodes(&self) -> Option<Vec<NodeVariant>> { None }
 }

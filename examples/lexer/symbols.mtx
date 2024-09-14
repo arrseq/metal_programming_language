@@ -13,4 +13,6 @@ table_2   column_1        column_2        column_3
           -754,2          500,79          7200
           182             "string"        identifier
 
-Invalid Number "=" 10000000000000000000000000000000000000000000000000000000000000
+Invalid Number "=" 10000000000000000000,5 -100
+
+variable my_integer integer8 "=" 10000 ref logical

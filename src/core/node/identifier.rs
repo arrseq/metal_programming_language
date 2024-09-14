@@ -5,7 +5,7 @@ use crate::core::node::{ErrorKind, NodeVariant, Parsable, Traverser};
 use crate::core::token::Kind;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Identifier<'a>(&'a str);
+pub struct Identifier<'a>(pub &'a str);
 
 pub type Node<'a> = node::Node<Identifier<'a>>;
 
@@ -25,7 +25,6 @@ impl<'a> Node<'a> {
             return Ok(identifier);
         }
 
-        let copied_peek = *peeked.kind();
         Err(tokens.new_other_error(Error::ExpectedIdentifier))
     }
 }
@@ -37,7 +36,5 @@ impl<'a> Parsable<'a> for Node<'a> {
         let start = tokens.token_offset();
         let identifier = Self::next_identifier(tokens)?;
         tokens.end(start, Identifier(identifier))
-    }
-
-    fn nodes(&self) -> Option<Vec<NodeVariant>> { None }
+    } 
 }

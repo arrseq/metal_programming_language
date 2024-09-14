@@ -1,7 +1,7 @@
 use std::cell::{Cell, RefCell};
 use std::fmt::Debug;
 use metal_programming_language::core::{node, token};
-use metal_programming_language::core::node::{identifier, number, string, whitespace, Error, ErrorKind, NodeVariant, Parsable, Traverser};
+use metal_programming_language::core::node::{identifier, number, r#type, string, whitespace, Error, ErrorKind, NodeVariant, Parsable, Traverser};
 use inline_colorization::*;
 use metal_programming_language::core::node::number::Number;
 use metal_programming_language::core::node::string::Node;
@@ -49,7 +49,8 @@ enum Color {
     Cyan,
     Purple,
     Green,
-    Yellow
+    Yellow,
+    Aqua
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -73,6 +74,7 @@ fn main() {
         if try_node::<string::Node, <string::Node as Parsable>::Error>(&mut nodes, &mut tokens, |x| Ok(NodeVariant::String(string::Node::parse(x)?))).is_ok() { continue }
         if try_node::<identifier::Node, <identifier::Node as Parsable>::Error>(&mut nodes, &mut tokens, |x| Ok(NodeVariant::Identifier(identifier::Node::parse(x)?))).is_ok() { continue }
         if try_node::<number::Node, <number::Node as Parsable>::Error>(&mut nodes, &mut tokens, |x| Ok(NodeVariant::Number(number::Node::parse(x)?))).is_ok() { continue }
+        if try_node::<r#type::Node, <r#type::Node as Parsable>::Error>(&mut nodes, &mut tokens, |x| Ok(NodeVariant::Type(r#type::Node::parse(x)?))).is_ok() { continue }
         break
     }
     
@@ -93,6 +95,7 @@ fn main() {
                 };
                 (color, id.start_token(), id.end_token())
             }
+            NodeVariant::Type(id) => (Color::Aqua, id.start_token(), id.end_token()),
         };
         
         let offset = start - source_tokens.token_offset();
@@ -119,7 +122,8 @@ fn main() {
             Color::Cyan => print!("{color_cyan}{}{color_reset}", token.token.kind()),
             Color::Purple => print!("{color_magenta}{}{color_reset}", token.token.kind()),
             Color::Green => print!("{color_green}{}{color_reset}", token.token.kind()),
-            Color::Yellow => print!("{color_yellow}{}{color_reset}", token.token.kind())
+            Color::Yellow => print!("{color_yellow}{}{color_reset}", token.token.kind()),
+            Color::Aqua => print!("{color_bright_cyan}{}{color_reset}", token.token.kind())
         }
     }
 }

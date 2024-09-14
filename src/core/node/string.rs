@@ -1,6 +1,7 @@
 use crate::core::node;
 use crate::core::node::{NodeVariant, Parsable, Traverser};
 use crate::core::token::Kind;
+use crate::Pbt;
 
 pub type Node<'a> = node::Node<&'a str>;
 
@@ -39,6 +40,4 @@ impl<'a> Parsable<'a> for Node<'a> {
 
         traverser.end(start, &traverser.source()[byte_start..byte_end])
     }
-
-    fn nodes(&self) -> Option<Vec<NodeVariant>> { None }
 }

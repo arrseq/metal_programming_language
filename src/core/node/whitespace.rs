@@ -2,6 +2,7 @@ use thiserror::Error;
 use crate::core::node;
 use crate::core::node::{NodeVariant, Parsable, Traverser};
 use crate::core::token::Kind;
+use crate::Pbt;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum WhiteSpace {
@@ -36,6 +37,4 @@ impl<'a> Parsable<'a> for Node {
         if accumulator.is_empty() { return Err(traverser.new_other_error(())) }
         traverser.end(start, accumulator.into_boxed_slice())
     }
-
-    fn nodes(&self) -> Option<Vec<NodeVariant>> { None }
 }

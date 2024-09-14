@@ -2,6 +2,8 @@ pub mod identifier;
 pub mod string;
 pub mod whitespace;
 pub mod number;
+pub mod r#type;
+pub mod declaration;
 
 #[cfg(test)]
 mod test;
@@ -11,13 +13,15 @@ use std::iter::Peekable;
 use thiserror::Error;
 use crate::core::{node, token};
 use crate::core::token::{Kind, Token};
+use crate::Pbt;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NodeKind {
     WhiteSpace,
     String,
     Identifier,
-    Number
+    Number,
+    Type
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -25,7 +29,8 @@ pub enum NodeVariant<'a> {
     WhiteSpace(whitespace::Node),
     String(string::Node<'a>),
     Identifier(identifier::Node<'a>),
-    Number(number::Node)
+    Number(number::Node),
+    Type(r#type::Node<'a>)
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -177,5 +182,4 @@ impl<'a> Iterator for Traverser<'a> {
 pub trait Parsable<'a>: Sized {
     type Error: Debug + PartialEq;
     fn parse(tokens: &mut Traverser<'a>) -> Result<Self, node::Error<Self::Error>>;
-    fn nodes(&self) -> Option<Vec<NodeVariant>>;
 }
